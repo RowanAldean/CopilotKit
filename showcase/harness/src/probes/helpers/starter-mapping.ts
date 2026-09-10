@@ -4,14 +4,14 @@
  * The starter-smoke matrix (`STARTERS` in
  * `showcase/tests/e2e/starter-smoke.spec.ts`) names each starter template by
  * its own slug. The dashboard has one column per
- * `showcase/integrations/<slug>/manifest.yaml` — **21** of them today (22
+ * `showcase/integrations/<slug>/manifest.yaml` — **22** of them today (23
  * directories minus `_shared`) — and the `starter` probe family must write
  * `starter:<dashboard-column-slug>/<level>` rows so the dashboard only ever
  * sees column slugs (mirroring how `CATALOG_TO_D5_KEY` bridges the
  * harness↔dashboard namespaces in `live-status.ts`).
  *
- * This module is the single source of truth for that remap. 12 starters are
- * mapped: 5 whose slug drifts from the column slug, and 7 that map one-to-one
+ * This module is the single source of truth for that remap. 13 starters are
+ * mapped: 6 whose slug drifts from the column slug, and 7 that map one-to-one
  * (the slug is identical on both sides).
  *
  * A column absent from this map is NOT automatically "unsupported". The
@@ -71,14 +71,15 @@
  * Starter slug (as it appears in the smoke matrix) → dashboard column slug
  * (the `showcase/integrations/<slug>` directory name).
  *
- * The 5 drift entries come first (slug differs across the two surfaces);
+ * The 6 drift entries come first (slug differs across the two surfaces);
  * the 7 direct entries follow (slug identical on both sides, listed
- * explicitly so the map is exhaustive over the 12-starter matrix and the
+ * explicitly so the map is exhaustive over the starter matrix and the
  * drift test can assert full coverage rather than inferring identity).
  */
 export const STARTER_TO_COLUMN: Readonly<Record<string, string>> = {
-  // ── 5 drift mappings (starter slug ≠ dashboard column slug) ──
+  // ── 6 drift mappings (starter slug ≠ dashboard column slug) ──
   adk: "google-adk",
+  antigravity: "google-antigravity",
   "langgraph-js": "langgraph-typescript",
   "strands-python": "strands",
   "ms-agent-framework-dotnet": "ms-agent-dotnet",
