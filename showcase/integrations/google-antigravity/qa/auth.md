@@ -3,8 +3,8 @@
 ## Prerequisites
 
 - Demo deployed and accessible at /demos/auth
-- ADK agent backend healthy (check /api/health)
-- GOOGLE_API_KEY set in the deployment
+- Agent backend healthy (check /api/health; the agent server answers `GET /health` with its agent list, which includes `auth`)
+- OPENAI_API_KEY set in the deployment (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); the runtime's `auth-demo` agent maps to `${AGENT_URL}/auth`, bound in `src/agents/registry.py` to the shared `neutral_agent()`
 
 ## Test Steps
 

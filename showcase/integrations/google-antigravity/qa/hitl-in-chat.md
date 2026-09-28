@@ -25,7 +25,7 @@
 ### 3. Time-picker card (book_call HITL flow)
 
 The `book_call` HITL tool is defined on the frontend via
-`useHumanInTheLoop`. The ADK agent (`hitl_in_chat_book_call_agent`) is
+`useHumanInTheLoop`. The Antigravity agent (`hitl_in_chat_agent()` in `src/agents/hitl.py`) is
 instructed to call that tool with `topic` + `attendee` args; the frontend
 renders a `TimePickerCard` and forwards the user's choice back to the agent
 as the tool result.

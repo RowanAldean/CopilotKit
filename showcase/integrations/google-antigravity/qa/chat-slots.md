@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/chat-slots` on the dashboard host
-- Agent backend is healthy (`/api/health` or `/api/copilotkit` GET); `GOOGLE_API_KEY` is set on Railway; the ADK agent server has `chat_slots` registered against the neutral `_simple_chat` agent
+- Agent backend is healthy (`/api/health` or `/api/copilotkit` GET); `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); the agent server (`src/agent_server.py`) mounts `chat-slots` at `/chat-slots`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py`
 - Note: this demo DOES include `data-testid` attributes on every custom slot. Use them as the primary selectors. The underlying agent is the neutral "helpful, concise assistant" (no frontend tools, no agent tools) — this demo exercises frontend slot customization only.
 
 ## Test Steps

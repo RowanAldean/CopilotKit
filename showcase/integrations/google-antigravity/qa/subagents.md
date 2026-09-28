@@ -3,8 +3,8 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/subagents` on the dashboard host
-- Agent backend is healthy (`/api/health`); `GOOGLE_API_KEY` is set (or `GOOGLE_GEMINI_BASE_URL` points at the aimock proxy)
-- A supervisor `LlmAgent` delegates to three sub-agents (research / writing / critique) via tools. Each delegation appends one `completed` entry to `state["delegations"]`.
+- Agent backend is healthy (`/api/health`); `OPENAI_API_KEY` is set (or `OPENAI_BASE_URL` points at the aimock proxy); the Go harness and the sub-agent tools both call the model through the in-process OpenAI-compatible shim in `src/openai_proxy.py`
+- A supervisor `AntigravityAgent` (`subagents_agent()` in `src/agents/subagents.py`) delegates to three sub-agents (research / writing / critique) via tools. Each delegation appends one `completed` entry to `state["delegations"]`.
 
 ## Test Steps
 
@@ -46,7 +46,7 @@
 #### Critic Loop Regression (one critic card per run)
 
 - [ ] Confirm that exactly 1 critic card renders per pill click — the count must be stable across a 5s dwell after completion
-- [ ] If a second critic card appears, the supervisor is re-entering the critic — file a bug (see `subagents_agent.py` instruction enforcing single-call-per-tool)
+- [ ] If a second critic card appears, the supervisor is re-entering the critic — file a bug (see `SUPERVISOR_PROMPT` in `src/agents/subagents.py`: "research first, then write, then critique once")
 
 #### All Pills Run the Same Flow
 
@@ -56,7 +56,7 @@
 ### 3. Error Handling
 
 - [ ] Send an empty message; verify it is a no-op
-- [ ] If a Gemini sub-agent call fails, verify the delegation log shows the error as a `completed` entry whose `result` contains the user-facing failure message (server logs preserve the traceback)
+- [ ] If a sub-agent model call fails (non-2xx from the shim/upstream), verify NO delegation entry is appended for that call (`_run` in `src/agents/subagents.py` raises before `_record_delegation`), the tool's card shows `There was an error executing <tool>: ...` (the adapter reports a raising server tool in its `TOOL_CALL_RESULT`, then re-raises it to the harness), and the supervisor's run still ends instead of hanging. A sub-agent that returns empty content is recorded as a `completed` entry whose `result` is `<sub-agent produced no output>`
 - [ ] Verify no uncaught console errors during normal usage
 
 ## Expected Results

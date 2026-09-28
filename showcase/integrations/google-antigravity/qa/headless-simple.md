@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/headless-simple` on the dashboard host
-- Agent backend is healthy (`/api/health`); `GOOGLE_API_KEY` is set on Railway; the ADK backend mounts the shared `_simple_chat` LlmAgent (Gemini 3.1 Flash-Lite) at `/headless_simple`
+- Agent backend is healthy (`/api/health`); `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`; default model `gpt-4.1-mini`); the agent server (`src/agent_server.py`) mounts the shared `neutral_agent()` from `src/agents/chat.py` at `/headless-simple`
 - The demo wires `agent="headless-simple"` at `/api/copilotkit` (neutral assistant cell)
 - Note: the demo source contains no `data-testid` attributes. Checks below rely on verbatim visible text, role/button selectors, and Tailwind utility-class structure
 

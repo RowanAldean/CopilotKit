@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/prebuilt-popup` on the dashboard host
-- Agent backend is healthy (`/api/health` or `/api/copilotkit` GET); `GOOGLE_API_KEY` is set on Railway; the ADK agent server has `prebuilt_popup` registered against the neutral `_simple_chat` agent
+- Agent backend is healthy (`/api/health` or `/api/copilotkit` GET); `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); the agent server (`src/agent_server.py`) mounts `prebuilt-popup` at `/prebuilt-popup`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py`
 - Note: the demo source contains no `data-testid` attributes of its own. Checks below rely on verbatim visible text, role-based selectors, and CopilotKit's built-in popup testids (`copilot-popup`, `copilot-chat-toggle`, `copilot-close-button`, `copilot-suggestion`, `copilot-assistant-message`, `copilot-send-button`). The underlying agent is the neutral "helpful, concise assistant" (no frontend tools, no agent tools).
 
 ## Test Steps
@@ -37,7 +37,7 @@
 
 #### Agent Wiring
 
-- [ ] Confirm (via DevTools → Network) that chat submissions POST to `/api/copilotkit` with agent name `prebuilt_popup` in the payload; response streams back as SSE with no 4xx/5xx status
+- [ ] Confirm (via DevTools → Network) that chat submissions POST to `/api/copilotkit` with agent name `prebuilt-popup` in the payload; response streams back as SSE with no 4xx/5xx status
 
 ### 3. Error Handling
 

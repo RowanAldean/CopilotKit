@@ -3,8 +3,8 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/frontend-tools` on the dashboard host
-- Agent backend is healthy (`/api/copilotkit` GET returns `agent_status: "reachable"`); `GOOGLE_API_KEY` is set; the Python `agent_server` exposes the `frontend_tools` agent (which shares `_simple_chat` with the other frontend-only demos)
-- The backend `_simple_chat` registers NO server-side change_background tool — the agent forwards the frontend tool schema at runtime; the browser owns the handler
+- Agent backend is healthy (`/api/copilotkit` GET returns `agent_status: "reachable"`); `OPENAI_API_KEY` is set (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); the agent server (`src/agent_server.py`) mounts the `frontend_tools` agent at `/frontend_tools`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py` (shared with the other frontend-only demos)
+- The backend `neutral_agent()` registers NO server-side change_background tool — the agent forwards the frontend tool schema at runtime; the browser owns the handler
 - Frontend registers exactly ONE tool via `useFrontendTool`: **`change_background`** (parameter: `background: string` — a CSS background value, colors or gradients). Handler sets local React state and returns `{ status: "success", message: "Background changed to …" }`
 
 ## Test Steps

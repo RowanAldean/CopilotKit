@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/mcp-apps` on the dashboard host
-- Agent backend is healthy; `GOOGLE_API_KEY` is set on Railway; `AGENT_URL` points at the ADK agent server exposing the `mcp_apps` endpoint (registered as agent name `mcp-apps` — see `src/app/api/copilotkit-mcp-apps/route.ts`)
+- Agent backend is healthy; `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); `AGENT_URL` points at the Antigravity agent server (`src/agent_server.py`), which mounts `mcp_apps_agent()` from `src/agents/mcp_apps.py` at `/mcp-apps` (registered as agent name `mcp-apps` — see `src/app/api/copilotkit-mcp-apps/route.ts`)
 - MCP server target: the public Excalidraw MCP app at `https://mcp.excalidraw.com` (override via `MCP_SERVER_URL`). Pinned `serverId: "excalidraw"` so URL changes don't silently break persisted activities
 - Note: the demo source contains no `data-testid` attributes and registers no custom activity renderer — CopilotKit's built-in `MCPAppsActivityRenderer` handles the sandboxed iframe automatically. Checks below rely on verbatim visible text, network traffic, and the iframe DOM
 
@@ -27,7 +27,7 @@
 
 #### MCP Tool Invocation (`create_view`)
 
-- [ ] Click "Draw a flowchart"; within 60s verify the agent calls the `create_view` MCP tool exactly ONCE (per `SYSTEM_PROMPT` in `src/agents/mcp_apps_agent.py`: "Call `create_view` ONCE with 3-5 elements total") — confirm via DevTools → Network stream or backend logs
+- [ ] Click "Draw a flowchart"; within 60s verify the agent calls the `create_view` MCP tool exactly ONCE (per `SYSTEM_PROMPT` in `src/agents/mcp_apps.py`: "Call `create_view` ONCE with 3-5 elements total") — confirm via DevTools → Network stream or backend logs
 - [ ] Verify the tool payload contains 3-5 Excalidraw elements (shapes + arrows + optional title text), each with a unique string `id`, and ends with ONE `cameraUpdate` sized `600x450` or `800x600`
 
 #### Activity Renderer (built-in `MCPAppsActivityRenderer`)

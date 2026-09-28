@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/headless-complete` on the dashboard host
-- Agent backend is healthy (`/api/health`); `GOOGLE_API_KEY` is set on Railway; the ADK backend mounts the shared `_simple_chat` LlmAgent (Gemini 3.1 Flash-Lite) at `/headless_complete` — the demo relies on aimock fixtures to supply tool calls (`get_weather`, `get_stock_price`, `get_revenue_chart`) since the ADK simple agent has no real backend tools
+- Agent backend is healthy (`/api/health`); `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`; default model `gpt-4.1-mini`); the agent server (`src/agent_server.py`) mounts `headless_complete_agent()` from `src/agents/headless_complete.py` at `/headless_complete`, which registers real backend tools `get_weather`, `get_stock_price`, and `get_revenue_chart` (mock data)
 - The demo wires `agent="headless-complete"` at `/api/copilotkit-mcp-apps` (shared with the mcp-apps cell) so the Excalidraw MCP server at `MCP_SERVER_URL || https://mcp.excalidraw.com` is available
 - Note: the demo defines headless-specific `data-testid`s in `chat/message-list.tsx`, `chat/composer.tsx`, `tools/weather-card.tsx`, `tools/stock-card.tsx`, `tools/highlight-note.tsx`, and `tools/chart-card.tsx`. Other checks rely on verbatim text, role selectors, and Tailwind utility classes
 

@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/beautiful-chat` on the dashboard host
-- Agent backend is healthy (`/api/health`); `GOOGLE_API_KEY` is set on Railway; `AGENT_URL` points at a Google Antigravity FastAPI service exposing the `beautiful_chat` agent
+- Agent backend is healthy (`/api/health`); `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); `AGENT_URL` points at the Google Antigravity FastAPI agent server (`src/agent_server.py`), which mounts `beautiful_chat_agent()` from `src/agents/beautiful_chat.py` at `/beautiful_chat`
 - Note: the demo source contains no `data-testid` attributes. Checks below rely on verbatim visible text and DOM structure.
 
 ## Test Steps
