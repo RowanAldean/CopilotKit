@@ -98,9 +98,7 @@ class TestProxy:
         assert seen["path"] == "/v1/chat/completions"
         assert seen["headers"]["authorization"] == "Bearer sk-test"
         assert seen["headers"]["x-aimock-context"] == "google-antigravity"
-        assert seen["body"]["tools"][0]["function"]["parameters"] == {
-            "type": "object"
-        }
+        assert seen["body"]["tools"][0]["function"]["parameters"] == {"type": "object"}
 
     def test_an_unreachable_upstream_is_a_json_502_not_a_text_500(self, monkeypatch):
         def handler(request: httpx.Request) -> httpx.Response:

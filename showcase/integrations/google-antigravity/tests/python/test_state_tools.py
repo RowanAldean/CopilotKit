@@ -108,7 +108,9 @@ class TestSubagentDelegations:
         (critique,) = bridge.build_server_tools([subagents.critique_agent])
         assert await critique(task="review") == subagents.SUB_AGENT_EMPTY_SENTINEL
         (snapshot,) = _snapshots(bridge.drain())
-        assert snapshot["delegations"][0]["result"] == subagents.SUB_AGENT_EMPTY_SENTINEL
+        assert (
+            snapshot["delegations"][0]["result"] == subagents.SUB_AGENT_EMPTY_SENTINEL
+        )
 
     async def test_a_failed_call_records_nothing_and_reports_the_error(
         self, completions
