@@ -44,8 +44,8 @@ def _upstream() -> str:
     (compose sets ``http://aimock:4010/v1``). The harness appends
     ``/v1/chat/completions`` itself, so the shim's upstream is the root.
     """
-    base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    return base[: -len("/v1")] if base.rstrip("/").endswith("/v1") else base.rstrip("/")
+    base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    return base[: -len("/v1")] if base.endswith("/v1") else base
 
 
 _BASE_URL: str | None = None

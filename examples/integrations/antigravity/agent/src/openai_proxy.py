@@ -64,7 +64,13 @@ def _normalize_schema(node: Any) -> Any:
         return node
     out = {}
     for key, value in node.items():
-        out[key] = _lower_type(value) if key == "type" else _normalize_schema(value)
+        # `type` is only a type keyword when it holds a name or a list of
+        # names. Under `properties` it can also be a field CALLED "type",
+        # whose value is a schema that still needs normalizing.
+        if key == "type" and isinstance(value, (str, list)):
+            out[key] = _lower_type(value)
+        else:
+            out[key] = _normalize_schema(value)
     return out
 
 

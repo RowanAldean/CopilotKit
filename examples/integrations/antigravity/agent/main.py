@@ -109,8 +109,8 @@ def _upstream() -> str:
     the harness appends `/v1/chat/completions` itself — so the shim's upstream
     (and the `base_url` handed to the SDK) must be the root without it.
     """
-    base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    return base[: -len("/v1")] if base.rstrip("/").endswith("/v1") else base.rstrip("/")
+    base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+    return base[: -len("/v1")] if base.endswith("/v1") else base
 
 
 # Start the shim once, at import, and hand the SDK its local URL. Starting it
