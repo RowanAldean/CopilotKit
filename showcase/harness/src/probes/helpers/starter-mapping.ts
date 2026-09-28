@@ -10,12 +10,12 @@
  * sees column slugs (mirroring how `CATALOG_TO_D5_KEY` bridges the
  * harness↔dashboard namespaces in `live-status.ts`).
  *
- * This module is the single source of truth for that remap. 13 starters are
- * mapped: 6 whose slug drifts from the column slug, and 7 that map one-to-one
+ * This module is the single source of truth for that remap. 12 starters are
+ * mapped: 5 whose slug drifts from the column slug, and 7 that map one-to-one
  * (the slug is identical on both sides).
  *
  * A column absent from this map is NOT automatically "unsupported". The
- * remaining 9 columns split three ways, and conflating them is exactly the
+ * remaining 10 columns split three ways, and conflating them is exactly the
  * rot this file grew:
  *
  *   - `strands-typescript`, `claude-sdk-python`, `claude-sdk-typescript` —
@@ -43,6 +43,10 @@
  *     therefore declared in `UNPROBED_STARTER_TO_COLUMN` below and its column in
  *     `STARTER_COLUMNS_UNPROBED` (`live-status.ts`) — the gray `?` chip, never
  *     the 🚫 capability claim.
+ *   - `google-antigravity` — the smoke matrix's `antigravity` starter. It runs
+ *     in the CI smoke matrix, but the showcase package is not deployed yet, so
+ *     no `starter-antigravity` image or Railway service exists. Declared in
+ *     `UNPROBED_STARTER_TO_COLUMN`.
  *   - `ag2`, `built-in-agent`, `langroid`, `ms-agent-harness-dotnet`,
  *     `spring-ai` — genuinely have no starter; these are the only columns that
  *     may render 🚫 "Not supported by this framework".
@@ -71,15 +75,14 @@
  * Starter slug (as it appears in the smoke matrix) → dashboard column slug
  * (the `showcase/integrations/<slug>` directory name).
  *
- * The 6 drift entries come first (slug differs across the two surfaces);
+ * The 5 drift entries come first (slug differs across the two surfaces);
  * the 7 direct entries follow (slug identical on both sides, listed
- * explicitly so the map is exhaustive over the starter matrix and the
+ * explicitly so the map is exhaustive over the 12-starter matrix and the
  * drift test can assert full coverage rather than inferring identity).
  */
 export const STARTER_TO_COLUMN: Readonly<Record<string, string>> = {
-  // ── 6 drift mappings (starter slug ≠ dashboard column slug) ──
+  // ── 5 drift mappings (starter slug ≠ dashboard column slug) ──
   adk: "google-adk",
-  antigravity: "google-antigravity",
   "langgraph-js": "langgraph-typescript",
   "strands-python": "strands",
   "ms-agent-framework-dotnet": "ms-agent-dotnet",
@@ -114,6 +117,9 @@ export const UNPROBED_STARTER_TO_COLUMN: Readonly<Record<string, string>> = {
   // See the `crewai-conversational-flows` bullet in the module header for the
   // three-surface evidence, and for why nothing probes it.
   "crewai-flows": "crewai-conversational-flows",
+  // In the CI smoke matrix, but no `starter-antigravity` image is built and no
+  // Railway service exists until the showcase package deploys.
+  antigravity: "google-antigravity",
 };
 
 /** The four smoke levels probed per starter, in dashboard sub-row order. */
