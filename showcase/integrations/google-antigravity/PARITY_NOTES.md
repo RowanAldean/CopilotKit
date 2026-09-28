@@ -224,8 +224,8 @@ Two more things are expected-red in that whole-directory run, both measured on
   prompts). On 2026-09-28 `aimock/d6/google-antigravity/beautiful-chat.json`
   gained turnIndex-staged legs for all four, mirrored from
   `d6/claude-sdk-python/beautiful-chat.json`; Task Manager now also has the
-  backend `manage_todos` / `get_todos` it needs. Not yet re-run against a
-  stack (see "Verified cells").
+  backend `manage_todos` / `get_todos` it needs. All four pass as of
+  2026-09-28 (see "Verified cells").
 - **`google-antigravity` is the only slug of 22 with no
   `aimock/d6/<slug>/_from-feature-parity.json`.** The other 21 carry a mirrored
   copy of the 22 legacy feature-parity fixtures. Adding one here is a real
@@ -384,14 +384,12 @@ unsupported shared-state pill documented under "Operational").
 
 Re-measured on 2026-09-28 after rebasing onto main and adding the adapter's
 `get_state()` / `set_state()`, on a freshly built `--isolate
-google-antigravity-session` stack: `passed: 26, failed: 0`, including the two
-new cells `a2ui-fixed-schema` (probed as `gen-ui-a2ui-fixed`) and
-`open-gen-ui` (probed as `gen-ui-open`). `gen-ui-agent` was added after that
-image was built and has NOT been measured yet: the rerun could not start
-because the local Docker disk was full. Its fixture, agent and page are in
-place; treat it as unverified until a D6 run confirms it. The same applies to
-the four beautiful-chat Playwright specs whose fixtures were added on
-2026-09-28 (see "Operational").
+google-antigravity-session` stack: `passed: 27, failed: 0`, including the three
+new cells `a2ui-fixed-schema` (probed as `gen-ui-a2ui-fixed`), `open-gen-ui`
+(`gen-ui-open`) and `gen-ui-agent`. Playwright against the same stack:
+`subagents` 3/3 (delegation log included), `beautiful-chat` 9/9 (the four
+pills that were red now have fixtures, Task Manager its todo tools),
+`a2ui-fixed-schema`, `open-gen-ui` 5/5, `gen-ui-agent` 6/6.
 
 `beautiful-chat` is five probe cells (`beautiful-chat-{bar-chart,pie-chart,
 schedule-meeting,search-flights,toggle-theme}`) and only counts as green when
@@ -424,7 +422,7 @@ all five pass; `headless-complete` is probed as `gen-ui-headless-complete`,
 | mcp-apps                        | GREEN         | `create_view` leg moved into `mcp-apps.json` and staged on turnIndex 0.                                                                                                                                |
 | a2ui-fixed-schema               | GREEN         | Backend `display_flight` returns the v0.9 `a2ui_operations` container; the route's A2UI middleware renders it. Legs at turnIndex 0/2.                                                                  |
 | open-gen-ui                     | GREEN         | Frontend `generateSandboxedUi` (registered by the provider) parks and is answered by its handler. Legs at turnIndex 0/2.                                                                               |
-| gen-ui-agent                    | unverified    | Seven `set_steps` round-trips at turnIndex 0..12, summary at 14. Not yet run; see above.                                                                                                               |
+| gen-ui-agent                    | GREEN         | Seven `set_steps` round-trips at turnIndex 0..12, summary at 14; the probe's second and third pills run in the same thread, so they carry ladders offset by 15 and 30.                                 |
 | reasoning-default               | not-supported | Harness drops `reasoning_content`; no reasoning surface mounts. See "Reasoning".                                                                                                                       |
 | reasoning-custom                | not-supported | Same root cause.                                                                                                                                                                                       |
 | tool-rendering-reasoning-chain  | not-supported | Same root cause: the probe asserts one reasoning-block mount per turn.                                                                                                                                 |
