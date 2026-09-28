@@ -26,6 +26,17 @@
       "response": {
         "content": "Sure — sea otters hold hands while they sleep so they don't drift apart on the current."
       }
+    },
+    {
+      "_comment": "The page's 'Tell me a joke' suggestion pill.",
+      "match": {
+        "userMessage": "Tell me a short joke",
+        "turnIndex": 0,
+        "context": "google-antigravity"
+      },
+      "response": {
+        "content": "Why did the developer go broke? Because they used up all their cache."
+      }
     }
   ]
 }

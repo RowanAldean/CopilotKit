@@ -16,6 +16,17 @@
       "response": {
         "content": "Hello from the sidebar — the CopilotSidebar prebuilt component is wired up and reachable. Anything else you would like me to confirm from inside the sidebar?"
       }
+    },
+    {
+      "_comment": "The page's 'Say hi' suggestion pill.",
+      "match": {
+        "userMessage": "Say hi!",
+        "turnIndex": 0,
+        "context": "google-antigravity"
+      },
+      "response": {
+        "content": "Hi there! I'm docked in the sidebar — ask me anything while you keep working."
+      }
     }
   ]
 }

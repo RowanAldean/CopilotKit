@@ -37,6 +37,33 @@
         "content": "Pie chart rendered above — Electronics is the largest slice, followed by Clothing, Food, and Books."
       },
       "chunkSize": 9999
+    },
+    {
+      "_comment": "The page's 'Sales bar chart' suggestion pill: 0 = frontend render_bar_chart call, 2 = narration after the round-trip.",
+      "match": {
+        "userMessage": "Show me a bar chart of quarterly sales",
+        "turnIndex": 0,
+        "context": "google-antigravity"
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_ag_gen_ui_custom_sales_bar_001",
+            "name": "render_bar_chart",
+            "arguments": "{\"title\": \"Quarterly Sales\", \"description\": \"Sales by quarter, USD thousands\", \"data\": [{\"label\": \"Q1\", \"value\": 120}, {\"label\": \"Q2\", \"value\": 145}, {\"label\": \"Q3\", \"value\": 132}, {\"label\": \"Q4\", \"value\": 178}]}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "userMessage": "Show me a bar chart of quarterly sales",
+        "turnIndex": 2,
+        "context": "google-antigravity"
+      },
+      "response": {
+        "content": "Q4 is the strongest quarter at $178k, up from $120k in Q1. The values are illustrative samples."
+      }
     }
   ]
 }

@@ -16,6 +16,17 @@
       "response": {
         "content": "Hello from the popup — the CopilotPopup prebuilt component is wired up and reachable. The launcher floats in the corner and the chat sits in an overlay panel."
       }
+    },
+    {
+      "_comment": "The page's 'Say hi' suggestion pill.",
+      "match": {
+        "userMessage": "Say hi from the popup",
+        "turnIndex": 0,
+        "context": "google-antigravity"
+      },
+      "response": {
+        "content": "Hello from the popup! I float over the page, so your layout stays exactly as it is."
+      }
     }
   ]
 }
