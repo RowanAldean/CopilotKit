@@ -70,7 +70,10 @@ not_supported_features:
   - reasoning-custom
   # Same root cause: this cell asserts one reasoning-block mount per turn.
   - tool-rendering-reasoning-chain
-  # Declarative / open generative UI not investigated for this adapter yet.
+  # No standalone cell for these yet. beautiful-chat's fixed-schema flight
+  # surface does work (backend search_flights -> A2UI middleware), but the
+  # dedicated a2ui-* / declarative-* / open-gen-ui-* demos have no agent or
+  # page in this package. See PARITY_NOTES.md "Beautiful Chat surfaces".
   - declarative-gen-ui
   - a2ui-fixed-schema
   - a2ui-recovery

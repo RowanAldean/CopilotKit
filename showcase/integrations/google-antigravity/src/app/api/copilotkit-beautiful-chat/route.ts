@@ -1,12 +1,13 @@
 // Dedicated runtime for the Beautiful Chat flagship showcase cell.
 //
-// Beautiful Chat simultaneously exercises A2UI (dynamic + fixed schema),
-// Open Generative UI, and MCP Apps. The canonical reference
-// (examples/integrations/langgraph-python) ships all three flags on a single
-// runtime; this route mirrors that combined-runtime shape for this
-// integration so non-flagship cells keep their per-demo `useFrontendTool` /
-// `useComponent` registrations isolated on the main `/api/copilotkit`
-// endpoint.
+// The canonical reference (examples/integrations/langgraph-python) enables
+// A2UI, Open Generative UI and MCP Apps on a single runtime for this page;
+// this route mirrors that combined-runtime config so non-flagship cells keep
+// their per-demo `useFrontendTool` / `useComponent` registrations isolated on
+// the main `/api/copilotkit` endpoint. On this integration only the A2UI
+// fixed-schema flight surface (backend `search_flights`) and MCP Apps are
+// verified; dynamic A2UI and Open Generative UI are not (see PARITY_NOTES.md,
+// "Beautiful Chat surfaces").
 //
 // References:
 // - showcase/integrations/langgraph-python/src/app/api/copilotkit-beautiful-chat/route.ts
@@ -55,8 +56,8 @@ export const POST = async (req: NextRequest) => {
         // injectA2UITool to true when a provider catalog is present — this
         // integration's adapter does not own a `generate_a2ui` tool the way
         // the canonical backend does, so a second, runtime-injected copy
-        // would be the only one in play; see PARITY_NOTES.md for the current
-        // A2UI support status on this adapter.
+        // would be the only one in play; see PARITY_NOTES.md ("Beautiful Chat
+        // surfaces") for the current A2UI support status on this adapter.
         injectA2UITool: false,
         // Models follow the tool-usage guide and omit `catalogId`, and the
         // middleware then falls back to the unregistered spec basic catalog

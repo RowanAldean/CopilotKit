@@ -147,8 +147,35 @@ Declared in `manifest.yaml` under `not_supported_features`, with reasons:
   reference integration, declares these unsupported too.
 - `declarative-gen-ui`, `a2ui-fixed-schema`, `a2ui-recovery`,
   `declarative-hashbrown`, `declarative-json-render`, `open-gen-ui`,
-  `open-gen-ui-advanced` — declarative / open generative UI was not
-  investigated for this adapter in this PR.
+  `open-gen-ui-advanced` — no standalone cell (agent or page) exists in this
+  package for these demos. That is not the same as the mechanism being
+  broken: the A2UI fixed-schema flight surface works inside beautiful-chat
+  (see "Beautiful Chat surfaces" below); the others were not investigated.
+- Attachments on `headless-complete`. The page's composer offers file
+  attachments (`useAttachments`), but the adapter drops non-text message
+  parts (the `multimodal` gap above), so an attached file never reaches the
+  model. Only the text of the message does, and nothing tells the user.
+
+## Beautiful Chat surfaces
+
+The page is byte-identical to langgraph-python, so it offers all nine
+suggestion pills. Their status on this adapter:
+
+| Pill                                            | Status                                                                                                                                  |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Pie Chart, Bar Chart (Controlled Generative UI) | Works: frontend tools plus backend `query_data`. Probe cells green.                                                                     |
+| Schedule Meeting (HITL)                         | Works: frontend tool parks until the user answers. Probe cell green.                                                                    |
+| Search Flights (A2UI Fixed Schema)              | Works: backend `search_flights` returns the A2UI operations and the runtime's A2UI middleware renders them. Probe cell green.           |
+| Excalidraw Diagram (MCP App)                    | Expected to work: same `mcpApps` middleware path as the green `mcp-apps` cell, but no beautiful-chat probe covers it.                   |
+| Toggle Theme (Frontend Tools)                   | Works: frontend tool. Probe cell green.                                                                                                 |
+| Sales Dashboard (A2UI Dynamic)                  | Not supported: no `generate_a2ui` tool on this agent, and the route sets `injectA2UITool: false` as the reference does.                 |
+| Calculator App (Open Generative UI)             | Unverified: `openGenerativeUI: true` supplies the tool through `RunAgentInput.tools`, but no fixture or live run has exercised it here. |
+| Task Manager (Shared State)                     | Not supported: needs a state-writer path (`shared-state-read-write`).                                                                   |
+
+The unsupported pills fail harder here than they would on langgraph-python.
+If the model emits a tool name the harness was not configured with, the run
+aborts with `unknown_tool` instead of streaming the call through (see
+"Backend tools the reference declares and this package needed too").
 
 ## Operational
 
