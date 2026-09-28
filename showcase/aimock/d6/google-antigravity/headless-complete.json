@@ -5,7 +5,7 @@
     "created": "2026-05-21",
     "_note": "Narration fixtures (toolCallId) listed FIRST so they win when last message is a matching tool result. Toolcall fixtures listed AFTER and use only userMessage+context so they match on the initial user turn regardless of prior assistant/tool history.",
     "copiedFrom": "langgraph-python",
-    "googleAntigravityStaging": "google-antigravity staging: the Antigravity Go harness owns the conversation history and never sends role:\"tool\" messages -- a completed tool call comes back as an assistant message whose text is 'Tool response for <name>: ...'. hasToolResult/toolCallId therefore never fire here, so each leg is staged on turnIndex (assistant-message count; +2 per tool round-trip, +1 per text answer)."
+    "googleAntigravityStaging": "google-antigravity staging: the Antigravity Go harness owns the conversation history and never sends role:\"tool\" messages -- a completed tool call comes back as an assistant message whose text is 'Tool response for <name>: ...'. hasToolResult/toolCallId therefore never fire here, so each leg is staged on turnIndex (assistant-message count; +2 per tool round-trip, +1 per text answer). Every prompt carries legs at every position a four-prompt thread can reach it from (0/2, 3/5, 6/8, 9/11), so the pills work in any order; with only the spec's order staged, a prompt asked early fell through to its tool-call leg on every model request and repeated the call until the count reached its narration leg."
   },
   "fixtures": [
     {
@@ -139,6 +139,321 @@
       },
       "response": {
         "content": "Interrupt resolved with 'yes'. The agent resumed execution from the suspended node and produced its final answer."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "What's the weather in Tokyo",
+        "context": "google-antigravity",
+        "turnIndex": 3
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_weather_001_t3",
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Tokyo\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 5,
+        "userMessage": "What's the weather in Tokyo"
+      },
+      "response": {
+        "content": "Tokyo is 22°C and partly cloudy. The headless WeatherCard above shows the sunny snapshot from the tool."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "What's the weather in Tokyo",
+        "context": "google-antigravity",
+        "turnIndex": 6
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_weather_001_t6",
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Tokyo\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 8,
+        "userMessage": "What's the weather in Tokyo"
+      },
+      "response": {
+        "content": "Tokyo is 22°C and partly cloudy. The headless WeatherCard above shows the sunny snapshot from the tool."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "What's the weather in Tokyo",
+        "context": "google-antigravity",
+        "turnIndex": 9
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_weather_001_t9",
+            "name": "get_weather",
+            "arguments": "{\"location\":\"Tokyo\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 11,
+        "userMessage": "What's the weather in Tokyo"
+      },
+      "response": {
+        "content": "Tokyo is 22°C and partly cloudy. The headless WeatherCard above shows the sunny snapshot from the tool."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "price of AAPL right now",
+        "context": "google-antigravity",
+        "turnIndex": 0
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_stock_001_t0",
+            "name": "get_stock_price",
+            "arguments": "{\"ticker\":\"AAPL\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 2,
+        "userMessage": "price of AAPL right now"
+      },
+      "response": {
+        "content": "AAPL is at $189.42, up 1.27% on the day."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "price of AAPL right now",
+        "context": "google-antigravity",
+        "turnIndex": 6
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_stock_001_t6",
+            "name": "get_stock_price",
+            "arguments": "{\"ticker\":\"AAPL\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 8,
+        "userMessage": "price of AAPL right now"
+      },
+      "response": {
+        "content": "AAPL is at $189.42, up 1.27% on the day."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "price of AAPL right now",
+        "context": "google-antigravity",
+        "turnIndex": 9
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_stock_001_t9",
+            "name": "get_stock_price",
+            "arguments": "{\"ticker\":\"AAPL\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 11,
+        "userMessage": "price of AAPL right now"
+      },
+      "response": {
+        "content": "AAPL is at $189.42, up 1.27% on the day."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "ship the demo on Friday",
+        "context": "google-antigravity",
+        "turnIndex": 0
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_highlight_001_t0",
+            "name": "highlight_note",
+            "arguments": "{\"text\":\"ship the demo on Friday\",\"color\":\"yellow\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 2,
+        "userMessage": "ship the demo on Friday"
+      },
+      "response": {
+        "content": "Highlighted 'ship the demo on Friday' for you above."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "ship the demo on Friday",
+        "context": "google-antigravity",
+        "turnIndex": 3
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_highlight_001_t3",
+            "name": "highlight_note",
+            "arguments": "{\"text\":\"ship the demo on Friday\",\"color\":\"yellow\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 5,
+        "userMessage": "ship the demo on Friday"
+      },
+      "response": {
+        "content": "Highlighted 'ship the demo on Friday' for you above."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "ship the demo on Friday",
+        "context": "google-antigravity",
+        "turnIndex": 9
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_highlight_001_t9",
+            "name": "highlight_note",
+            "arguments": "{\"text\":\"ship the demo on Friday\",\"color\":\"yellow\"}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 11,
+        "userMessage": "ship the demo on Friday"
+      },
+      "response": {
+        "content": "Highlighted 'ship the demo on Friday' for you above."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "chart of revenue over the last six months",
+        "context": "google-antigravity",
+        "turnIndex": 0
+      },
+      "response": {
+        "content": "Pulling the revenue chart for the last six months...",
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_revenue_chart_001_t0",
+            "name": "get_revenue_chart",
+            "arguments": "{}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 2,
+        "userMessage": "chart of revenue over the last six months"
+      },
+      "response": {
+        "content": "Here is the chart of revenue over the last six months — quarterly revenue grew steadily, peaking in June."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "chart of revenue over the last six months",
+        "context": "google-antigravity",
+        "turnIndex": 3
+      },
+      "response": {
+        "content": "Pulling the revenue chart for the last six months...",
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_revenue_chart_001_t3",
+            "name": "get_revenue_chart",
+            "arguments": "{}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 5,
+        "userMessage": "chart of revenue over the last six months"
+      },
+      "response": {
+        "content": "Here is the chart of revenue over the last six months — quarterly revenue grew steadily, peaking in June."
+      }
+    },
+    {
+      "match": {
+        "userMessage": "chart of revenue over the last six months",
+        "context": "google-antigravity",
+        "turnIndex": 6
+      },
+      "response": {
+        "content": "Pulling the revenue chart for the last six months...",
+        "toolCalls": [
+          {
+            "id": "call_d5_headless_revenue_chart_001_t6",
+            "name": "get_revenue_chart",
+            "arguments": "{}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "context": "google-antigravity",
+        "turnIndex": 8,
+        "userMessage": "chart of revenue over the last six months"
+      },
+      "response": {
+        "content": "Here is the chart of revenue over the last six months — quarterly revenue grew steadily, peaking in June."
       }
     }
   ]
