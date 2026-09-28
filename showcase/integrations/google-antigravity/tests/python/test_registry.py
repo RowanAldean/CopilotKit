@@ -25,6 +25,7 @@ EXPECTED_PATHS = {
     "hitl-in-chat",
     "hitl-in-app",
     "gen-ui-tool-based",
+    "gen-ui-agent",
     "tool-rendering",
     "tool-rendering-default-catchall",
     "tool-rendering-custom-catchall",
@@ -34,6 +35,8 @@ EXPECTED_PATHS = {
     "reasoning-custom",
     "tool-rendering-reasoning-chain",
     "mcp-apps",
+    "a2ui_fixed_schema",
+    "open_gen_ui",
     "default",
 }
 

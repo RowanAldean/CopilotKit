@@ -1,9 +1,11 @@
 """Sub-agents as tools, as in langgraph-python's subagents.py.
 
-Each tool runs one model call for its role and returns the prose. The
-delegation log in the reference UI is fed by shared state, which this
-adapter cannot write yet; the per-tool cards still render from the tool
-calls (see PARITY_NOTES.md).
+Each tool runs one model call for its role, appends a delegation entry
+to the ``delegations`` slot of shared state with the adapter's
+``set_state()``, and returns the prose. The client gets a STATE_SNAPSHOT
+as each tool finishes, so the delegation log fills in while the
+supervisor is still running, the same way the reference's
+``Command(update={"delegations": [...]})`` does.
 
 The three tools are ``async def`` on purpose. The adapter wraps every
 server tool in an ``async def _invoke`` (``ui_bridge._build_server_tool``)
@@ -15,7 +17,10 @@ stops answering, and the entrypoint watchdog kills the agent after ~90s.
 """
 
 # @region[subagent-setup]
+import uuid
+
 import httpx
+from ag_ui_antigravity import get_state, set_state
 
 from agents._common import MODEL, SLUG, base_url
 
@@ -68,7 +73,29 @@ async def _run(role: str, task: str) -> str:
     )
     response.raise_for_status()
     content = response.json()["choices"][0]["message"].get("content") or ""
-    return content.strip() or SUB_AGENT_EMPTY_SENTINEL
+    result = content.strip() or SUB_AGENT_EMPTY_SENTINEL
+    _record_delegation(role, task, result)
+    return result
+
+
+def _record_delegation(role: str, task: str, result: str) -> None:
+    """Appends a completed delegation to shared state, shape as in the reference.
+
+    Read and write happen with no ``await`` between them, so tools the SDK
+    runs concurrently cannot interleave here and drop each other's entry.
+    """
+    state = get_state()
+    delegations = list(state.get("delegations") or [])
+    delegations.append(
+        {
+            "id": str(uuid.uuid4()),
+            "sub_agent": role,
+            "task": task,
+            "status": "completed",
+            "result": result,
+        }
+    )
+    set_state({**state, "delegations": delegations})
 
 
 # @region[supervisor-delegation-tools]

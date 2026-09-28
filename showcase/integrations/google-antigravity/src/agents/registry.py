@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from agents.a2ui_fixed import a2ui_fixed_agent
 from agents.beautiful_chat import beautiful_chat_agent
 from agents.chat import neutral_agent
+from agents.gen_ui_agent import gen_ui_agent
 from agents.gen_ui_tool_based import gen_ui_tool_based_agent
 from agents.headless_complete import headless_complete_agent
 from agents.hitl import hitl_in_app_agent, hitl_in_chat_agent
 from agents.mcp_apps import mcp_apps_agent
+from agents.open_gen_ui import open_gen_ui_agent
 from agents.reasoning import reasoning_agent
 from agents.subagents import subagents_agent
 from agents.tool_rendering import tool_rendering_agent
@@ -33,6 +36,7 @@ def build_registry() -> dict:
         "hitl-in-chat": hitl_in_chat_agent(),
         "hitl-in-app": hitl_in_app_agent(),
         "gen-ui-tool-based": gen_ui_tool_based_agent(),
+        "gen-ui-agent": gen_ui_agent(),
         "tool-rendering": rendering,
         "tool-rendering-default-catchall": rendering,
         "tool-rendering-custom-catchall": rendering,
@@ -42,5 +46,7 @@ def build_registry() -> dict:
         "reasoning-custom": reasoning,
         "tool-rendering-reasoning-chain": rendering,
         "mcp-apps": mcp_apps_agent(),
+        "a2ui_fixed_schema": a2ui_fixed_agent(),
+        "open_gen_ui": open_gen_ui_agent(),
         "default": neutral,
     }

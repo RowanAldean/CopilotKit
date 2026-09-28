@@ -93,10 +93,12 @@ via `enable_subagents=False`, for the same reason `ask_question` is disabled —
 avoiding an interrupt this showcase cannot drive). Instead, `research_agent`,
 `writing_agent`, and `critique_agent` are implemented as ordinary server-side
 tools that each make one additional chat-completion call through the shim and
-return prose. The per-tool cards render correctly from the resulting
-`TOOL_CALL_*` events. The reference's delegation log stays empty here: it is
-fed from shared agent state, which this adapter cannot write yet (see "Not
-supported" below).
+return prose. The per-tool cards render from the resulting `TOOL_CALL_*`
+events, and each tool also appends a `delegations` entry to shared state with
+the adapter's `get_state()` / `set_state()` (added to #2277 for this). The
+adapter streams a `STATE_SNAPSHOT` as each tool finishes, so the reference's
+live delegation log fills in while the supervisor runs, as it does on
+langgraph-python.
 
 ## Reasoning
 
@@ -133,10 +135,14 @@ Declared in `manifest.yaml` under `not_supported_features`, with reasons:
 
 - `shared-state-read`, `readonly-state-agent-context`, `agent-config` — the
   adapter forwards only user messages to Antigravity; `RunAgentInput` state,
-  context, and `forwardedProps` are not folded into the prompt yet.
-- `gen-ui-agent`, `shared-state-read-write`, `shared-state-streaming` — no
-  state-writer path: `STATE_SNAPSHOT` only comes from `structured_output` at
-  the end of a turn, so live step lists and agent-written notes cannot stream.
+  context, and `forwardedProps` are not folded into the prompt yet. Server
+  tools can read state (`get_state()`), but the model cannot.
+- `shared-state-read-write`, `shared-state-streaming` — server tools can now
+  write state (`set_state()`, which is what `gen-ui-agent`, `subagents` and
+  beautiful-chat's Task Manager use), but read-write also needs the model to
+  see the UI's preferences (above), and streaming needs tool arguments streamed
+  token by token, which the harness does not do (it hands over whole argument
+  dicts).
 - `multimodal` — non-text message parts are dropped by the adapter.
 - `reasoning-default`, `reasoning-custom`, `tool-rendering-reasoning-chain`
   — the Go harness drops the model's `reasoning_content` deltas, so no
@@ -145,12 +151,15 @@ Declared in `manifest.yaml` under `not_supported_features`, with reasons:
 - `gen-ui-interrupt`, `interrupt-headless` — quarantined upstream (a
   `@copilotkit/react-core/v2` resume-path hook bug); langgraph-python, the
   reference integration, declares these unsupported too.
-- `declarative-gen-ui`, `a2ui-fixed-schema`, `a2ui-recovery`,
-  `declarative-hashbrown`, `declarative-json-render`, `open-gen-ui`,
-  `open-gen-ui-advanced` — no standalone cell (agent or page) exists in this
-  package for these demos. That is not the same as the mechanism being
-  broken: the A2UI fixed-schema flight surface works inside beautiful-chat
-  (see "Beautiful Chat surfaces" below); the others were not investigated.
+- `open-gen-ui-advanced` — the page's sandbox functions (`evaluateExpression`,
+  `notifyHost`) are described to the model only through agent context, which
+  this adapter drops (first bullet), so the model cannot know what to call.
+  The basic `open-gen-ui` cell works: its tool comes through
+  `RunAgentInput.tools`, and the frontend handler answers it.
+- `declarative-gen-ui`, `a2ui-recovery`, `declarative-hashbrown`,
+  `declarative-json-render` — no standalone cell (agent or page) exists in
+  this package. Not investigated; `a2ui-fixed-schema` shows the A2UI
+  middleware path itself works.
 - Attachments on `headless-complete`. The page's composer offers file
   attachments (`useAttachments`), but the adapter drops non-text message
   parts (the `multimodal` gap above), so an attached file never reaches the
@@ -161,16 +170,16 @@ Declared in `manifest.yaml` under `not_supported_features`, with reasons:
 The page is byte-identical to langgraph-python, so it offers all nine
 suggestion pills. Their status on this adapter:
 
-| Pill                                            | Status                                                                                                                                  |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Pie Chart, Bar Chart (Controlled Generative UI) | Works: frontend tools plus backend `query_data`. Probe cells green.                                                                     |
-| Schedule Meeting (HITL)                         | Works: frontend tool parks until the user answers. Probe cell green.                                                                    |
-| Search Flights (A2UI Fixed Schema)              | Works: backend `search_flights` returns the A2UI operations and the runtime's A2UI middleware renders them. Probe cell green.           |
-| Excalidraw Diagram (MCP App)                    | Expected to work: same `mcpApps` middleware path as the green `mcp-apps` cell, but no beautiful-chat probe covers it.                   |
-| Toggle Theme (Frontend Tools)                   | Works: frontend tool. Probe cell green.                                                                                                 |
-| Sales Dashboard (A2UI Dynamic)                  | Not supported: no `generate_a2ui` tool on this agent, and the route sets `injectA2UITool: false` as the reference does.                 |
-| Calculator App (Open Generative UI)             | Unverified: `openGenerativeUI: true` supplies the tool through `RunAgentInput.tools`, but no fixture or live run has exercised it here. |
-| Task Manager (Shared State)                     | Not supported: needs a state-writer path (`shared-state-read-write`).                                                                   |
+| Pill                                            | Status                                                                                                                        |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Pie Chart, Bar Chart (Controlled Generative UI) | Works: frontend tools plus backend `query_data`. Probe cells green.                                                           |
+| Schedule Meeting (HITL)                         | Works: frontend tool parks until the user answers. Probe cell green.                                                          |
+| Search Flights (A2UI Fixed Schema)              | Works: backend `search_flights` returns the A2UI operations and the runtime's A2UI middleware renders them. Probe cell green. |
+| Excalidraw Diagram (MCP App)                    | Expected to work: same `mcpApps` middleware path as the green `mcp-apps` cell, but no beautiful-chat probe covers it.         |
+| Toggle Theme (Frontend Tools)                   | Works: frontend tool. Probe cell green.                                                                                       |
+| Sales Dashboard (A2UI Dynamic)                  | Not supported: no `generate_a2ui` tool on this agent, and the route sets `injectA2UITool: false` as the reference does.       |
+| Calculator App (Open Generative UI)             | Expected to work: same `generateSandboxedUi` path as the green `open-gen-ui` cell, but no beautiful-chat probe covers it.     |
+| Task Manager (Shared State)                     | Works: frontend `enableAppMode`, then backend `manage_todos` writes `todos` with `set_state()`; the canvas renders it.        |
 
 The unsupported pills fail harder here than they would on langgraph-python.
 If the model emits a tool name the harness was not configured with, the run
@@ -209,23 +218,14 @@ Two more things are expected-red in that whole-directory run, both measured on
 2026-09-10 against an `--isolate` stack:
 
 - **`beautiful-chat.spec.ts`'s Toggle Theme / Pie Chart / Bar Chart / Task
-  Manager tests.** They drive the beautiful-chat page's own suggestion pills
-  ("Toggle the app theme using the toggleTheme tool.", "Show me a pie chart of
-  our revenue distribution by category. Use the query_data tool …", …), and NO
-  fixture in the mounted set covers those prompts — not here and not in
-  langgraph-python, the declared baseline, whose `beautiful-chat.json` carries
-  only the five `d5 beautiful-chat probe: …` prompts plus `for next Tuesday`.
-  Only `d6/claude-sdk-{python,typescript}/beautiful-chat.json` cover them; the
-  specs' own comments point at the un-mounted legacy
-  `showcase/aimock/feature-parity.json` (the local/isolate aimock mounts only
-  `shared/`, `d4/`, `d5-recorded/`, `d6/`). So this is a fleet-wide gap, not a
-  google-antigravity divergence, and it was left alone rather than papered over
-  with per-integration fixtures the reference does not have. Task Manager is
-  additionally `shared-state-read-write`, declared unsupported. The three
-  chart/theme pills could be un-redded by mirroring the three
-  `hasToolResult: false` entries out of
-  `d6/claude-sdk-python/beautiful-chat.json` and restaging them on `turnIndex`;
-  the five `beautiful-chat-*` D6 probe cells are green either way.
+  Manager tests.** They drive the page's own suggestion pills, and on
+  2026-09-10 no mounted fixture covered those prompts (langgraph-python's
+  `beautiful-chat.json` only carries the five `d5 beautiful-chat probe: …`
+  prompts). On 2026-09-28 `aimock/d6/google-antigravity/beautiful-chat.json`
+  gained turnIndex-staged legs for all four, mirrored from
+  `d6/claude-sdk-python/beautiful-chat.json`; Task Manager now also has the
+  backend `manage_todos` / `get_todos` it needs. Not yet re-run against a
+  stack (see "Verified cells").
 - **`google-antigravity` is the only slug of 22 with no
   `aimock/d6/<slug>/_from-feature-parity.json`.** The other 21 carry a mirrored
   copy of the 22 legacy feature-parity fixtures. Adding one here is a real
@@ -382,6 +382,17 @@ the multi-pill demos were run against that stack in the same session
 upstream), `beautiful-chat` 3/7 (the four reds are the fixture gap and the
 unsupported shared-state pill documented under "Operational").
 
+Re-measured on 2026-09-28 after rebasing onto main and adding the adapter's
+`get_state()` / `set_state()`, on a freshly built `--isolate
+google-antigravity-session` stack: `passed: 26, failed: 0`, including the two
+new cells `a2ui-fixed-schema` (probed as `gen-ui-a2ui-fixed`) and
+`open-gen-ui` (probed as `gen-ui-open`). `gen-ui-agent` was added after that
+image was built and has NOT been measured yet: the rerun could not start
+because the local Docker disk was full. Its fixture, agent and page are in
+place; treat it as unverified until a D6 run confirms it. The same applies to
+the four beautiful-chat Playwright specs whose fixtures were added on
+2026-09-28 (see "Operational").
+
 `beautiful-chat` is five probe cells (`beautiful-chat-{bar-chart,pie-chart,
 schedule-meeting,search-flights,toggle-theme}`) and only counts as green when
 all five pass; `headless-complete` is probed as `gen-ui-headless-complete`,
@@ -411,6 +422,9 @@ all five pass; `headless-complete` is probed as `gen-ui-headless-complete`,
 | auth                            | GREEN         |                                                                                                                                                                                                        |
 | subagents                       | GREEN         | Supervisor chain restaged at turnIndex 0/2/4/6 (research → write → critique → answer).                                                                                                                 |
 | mcp-apps                        | GREEN         | `create_view` leg moved into `mcp-apps.json` and staged on turnIndex 0.                                                                                                                                |
+| a2ui-fixed-schema               | GREEN         | Backend `display_flight` returns the v0.9 `a2ui_operations` container; the route's A2UI middleware renders it. Legs at turnIndex 0/2.                                                                  |
+| open-gen-ui                     | GREEN         | Frontend `generateSandboxedUi` (registered by the provider) parks and is answered by its handler. Legs at turnIndex 0/2.                                                                               |
+| gen-ui-agent                    | unverified    | Seven `set_steps` round-trips at turnIndex 0..12, summary at 14. Not yet run; see above.                                                                                                               |
 | reasoning-default               | not-supported | Harness drops `reasoning_content`; no reasoning surface mounts. See "Reasoning".                                                                                                                       |
 | reasoning-custom                | not-supported | Same root cause.                                                                                                                                                                                       |
 | tool-rendering-reasoning-chain  | not-supported | Same root cause: the probe asserts one reasoning-block mount per turn.                                                                                                                                 |

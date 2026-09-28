@@ -37,6 +37,7 @@ const agentNames = [
   "hitl-in-chat",
   "hitl-in-app",
   "gen-ui-tool-based",
+  "gen-ui-agent",
   "tool-rendering",
   "tool-rendering-default-catchall",
   "tool-rendering-custom-catchall",

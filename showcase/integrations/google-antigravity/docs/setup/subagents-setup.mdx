@@ -6,7 +6,7 @@
     # Once the adapter is published:
     pip install ag-ui-antigravity google-antigravity
     # Until then, install it from the AG-UI repo:
-    pip install "git+https://github.com/ag-ui-protocol/ag-ui@19f654744c663533eea5dfe1bbb1c70db85524a3#subdirectory=integrations/antigravity/python" google-antigravity
+    pip install "git+https://github.com/ag-ui-protocol/ag-ui@a57e07c3148a425735077cf2123916e69e86418d#subdirectory=integrations/antigravity/python" google-antigravity
     ```
 
   </Step>
@@ -30,11 +30,12 @@
   </Step>
 </Steps>
 
-<Callout type="info" title="The delegation log stays empty here">
-  The reference UI's live delegation log reads a `delegations` slot out of
-  shared agent state. This adapter has no state-writer path yet — a
-  `STATE_SNAPSHOT` only comes from `structured_output` at the end of a turn —
-  so the per-tool cards render from the tool calls while the log stays empty.
+<Callout type="info" title="How the delegation log fills in">
+  Each tool also appends an entry to the `delegations` slot of shared state
+  with the adapter's `get_state()` / `set_state()`. `set_state()` streams a
+  `STATE_SNAPSHOT` as the tool finishes, so the UI's delegation log updates
+  while the supervisor is still running. The two helpers only work inside a
+  server tool, where the adapter knows which session the call belongs to.
 </Callout>
 
 <Callout type="info" title="Antigravity's native sub-agents are off">

@@ -137,6 +137,130 @@
       "response": {
         "content": "Two flights shown above — United at $349 (08:00) and Delta at $289 (10:15), both on time."
       }
+    },
+    {
+      "_comment": "beautiful-chat Pie Chart pill (beautiful-chat.spec.ts). Mirrored from d6/claude-sdk-python/beautiful-chat.json and restaged on turnIndex: 0 = frontend pieChart call, 2 = narration after the round-trip.",
+      "match": {
+        "userMessage": "Show me a pie chart of our revenue distribution by category",
+        "context": "google-antigravity",
+        "turnIndex": 0
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_ag_bc_pill_pie_001",
+            "name": "pieChart",
+            "arguments": "{\"title\": \"Revenue by Category\", \"description\": \"Breakdown of revenue across product categories\", \"data\": [{\"label\": \"Electronics\", \"value\": 42000}, {\"label\": \"Clothing\", \"value\": 28000}, {\"label\": \"Food\", \"value\": 18000}, {\"label\": \"Books\", \"value\": 12000}]}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "userMessage": "Show me a pie chart of our revenue distribution by category",
+        "context": "google-antigravity",
+        "turnIndex": 2
+      },
+      "response": {
+        "content": "Pie chart rendered above — Electronics leads at 42%, followed by Clothing at 28%."
+      }
+    },
+    {
+      "_comment": "beautiful-chat Bar Chart pill. Same staging as the Pie Chart pill.",
+      "match": {
+        "userMessage": "Show me a bar chart of our expenses by category",
+        "context": "google-antigravity",
+        "turnIndex": 0
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_ag_bc_pill_bar_001",
+            "name": "barChart",
+            "arguments": "{\"title\": \"Expenses by Category\", \"description\": \"Monthly expense breakdown\", \"data\": [{\"label\": \"Rent\", \"value\": 15000}, {\"label\": \"Salaries\", \"value\": 80000}, {\"label\": \"Marketing\", \"value\": 12000}, {\"label\": \"Travel\", \"value\": 5000}]}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "userMessage": "Show me a bar chart of our expenses by category",
+        "context": "google-antigravity",
+        "turnIndex": 2
+      },
+      "response": {
+        "content": "Bar chart rendered above — Salaries dominate at $80k."
+      }
+    },
+    {
+      "_comment": "beautiful-chat Toggle Theme pill. Same staging as the Pie Chart pill.",
+      "match": {
+        "userMessage": "Toggle the app theme using the toggleTheme tool",
+        "context": "google-antigravity",
+        "turnIndex": 0
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_ag_bc_pill_theme_001",
+            "name": "toggleTheme",
+            "arguments": "{}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "userMessage": "Toggle the app theme using the toggleTheme tool",
+        "context": "google-antigravity",
+        "turnIndex": 2
+      },
+      "response": {
+        "content": "Theme toggled."
+      }
+    },
+    {
+      "_comment": "beautiful-chat Task Manager pill. 0 = frontend enableAppMode, 2 = backend manage_todos (writes the todos slot with set_state, which streams a STATE_SNAPSHOT the canvas renders), 4 = narration.",
+      "match": {
+        "userMessage": "Enable app mode and add three todos about learning CopilotKit",
+        "context": "google-antigravity",
+        "turnIndex": 0
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_ag_bc_pill_app_mode_001",
+            "name": "enableAppMode",
+            "arguments": "{}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "userMessage": "Enable app mode and add three todos about learning CopilotKit",
+        "context": "google-antigravity",
+        "turnIndex": 2
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_ag_bc_pill_todos_001",
+            "name": "manage_todos",
+            "arguments": "{\"todos\": [{\"id\": \"\", \"title\": \"Read the CopilotKit docs\", \"description\": \"Skim the quickstart and the core concepts.\", \"emoji\": \"\\ud83d\\udcda\", \"status\": \"pending\"}, {\"id\": \"\", \"title\": \"Build a CopilotKit prototype\", \"description\": \"Wire a small agent into a React app.\", \"emoji\": \"\\ud83d\\udee0\\ufe0f\", \"status\": \"pending\"}, {\"id\": \"\", \"title\": \"Explore shared agent state\", \"description\": \"Read and write agent state from the UI.\", \"emoji\": \"\\ud83d\\udd04\", \"status\": \"pending\"}]}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "userMessage": "Enable app mode and add three todos about learning CopilotKit",
+        "context": "google-antigravity",
+        "turnIndex": 4
+      },
+      "response": {
+        "content": "App mode is on and three todos are on the board."
+      }
     }
   ]
 }

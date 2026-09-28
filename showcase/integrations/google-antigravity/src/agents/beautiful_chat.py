@@ -18,9 +18,19 @@ dashboard suggestion pills all instruct the model to "use the
 `query_data` tool to fetch the data first", and langgraph-python's
 ``beautiful_chat`` graph owns it as a backend tool as well.
 
+``manage_todos`` / ``get_todos`` back the Task Manager pill, as in the
+reference. They read and write the ``todos`` slot of shared state with the
+adapter's ``get_state()`` / ``set_state()``; the page's canvas renders
+``agent.state.todos`` and writes user edits back with ``agent.setState``,
+which reaches ``get_todos`` on the next run.
+
 No ``from __future__ import annotations``: the SDK derives the tool
 schema from the live annotations.
 """
+
+import uuid
+
+from ag_ui_antigravity import get_state, set_state
 
 from agents._common import build
 from tools.query_data import query_data_impl
@@ -30,9 +40,28 @@ SYSTEM_PROMPT = (
     "You are a helpful, concise assistant embedded in a product demo. "
     "Use the tools the surface offers you: charts and theme changes are "
     "frontend tools, data comes from `query_data`, and flight results go "
-    "through `search_flights`. "
+    "through `search_flights`. For todos, enable app mode first, then call "
+    "`get_todos` and `manage_todos` with the complete updated list. "
     "After a tool returns, summarize the result in one short sentence."
 )
+
+
+def manage_todos(todos: list[dict]) -> str:
+    """Manage the current todos. Pass the complete list, not only the changes.
+
+    Each todo has: id (leave empty for a new todo), title, description,
+    emoji, and status ("pending" or "completed").
+    """
+    for todo in todos:
+        if not todo.get("id"):
+            todo["id"] = str(uuid.uuid4())
+    set_state({**get_state(), "todos": todos})
+    return "Successfully updated todos"
+
+
+def get_todos() -> list[dict]:
+    """Get the current todos."""
+    return get_state().get("todos", [])
 
 
 def search_flights(flights: list[dict]) -> dict:
@@ -57,4 +86,7 @@ def query_data(query: str) -> list[dict]:
 
 
 def beautiful_chat_agent():
-    return build(system_instructions=SYSTEM_PROMPT, tools=[query_data, search_flights])
+    return build(
+        system_instructions=SYSTEM_PROMPT,
+        tools=[query_data, search_flights, manage_todos, get_todos],
+    )

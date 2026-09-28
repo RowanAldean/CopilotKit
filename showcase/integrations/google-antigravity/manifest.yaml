@@ -15,6 +15,7 @@ docs_mode: generated
 sort_order: 61
 generative_ui:
   - constrained-explicit
+  - a2ui-fixed-schema
 interaction_modalities:
   - sidebar
   - embedded
@@ -46,15 +47,18 @@ features:
   - auth
   - subagents
   - mcp-apps
+  - a2ui-fixed-schema
+  - open-gen-ui
+  - gen-ui-agent
 not_supported_features:
   # The adapter forwards only user messages to Antigravity; RunAgentInput
   # state, context and forwardedProps are not folded into the prompt yet.
   - shared-state-read
   - readonly-state-agent-context
   - agent-config
-  # No state-writer path: STATE_SNAPSHOT only comes from structured_output at
-  # the end of a turn, so live step lists and agent-written notes cannot stream.
-  - gen-ui-agent
+  # Server tools can write state (set_state), but the model cannot read it:
+  # read-write needs the model to see the UI's preferences, and streaming
+  # needs tool arguments streamed token by token, which the harness does not do.
   - shared-state-read-write
   - shared-state-streaming
   # Non-text message parts are dropped by the adapter.
@@ -70,16 +74,14 @@ not_supported_features:
   - reasoning-custom
   # Same root cause: this cell asserts one reasoning-block mount per turn.
   - tool-rendering-reasoning-chain
-  # No standalone cell for these yet. beautiful-chat's fixed-schema flight
-  # surface does work (backend search_flights -> A2UI middleware), but the
-  # dedicated a2ui-* / declarative-* / open-gen-ui-* demos have no agent or
-  # page in this package. See PARITY_NOTES.md "Beautiful Chat surfaces".
+  # No standalone cell for these yet (a2ui-fixed-schema has one). See
+  # PARITY_NOTES.md "Not supported" and "Beautiful Chat surfaces".
   - declarative-gen-ui
-  - a2ui-fixed-schema
   - a2ui-recovery
   - declarative-hashbrown
   - declarative-json-render
-  - open-gen-ui
+  # The sandbox-function descriptors the model needs reach it only as agent
+  # context, which the adapter does not fold into the prompt yet.
   - open-gen-ui-advanced
 demos:
   - id: cli-start
@@ -337,3 +339,44 @@ demos:
       - src/agents/mcp_apps.py
       - src/app/demos/mcp-apps/page.tsx
       - src/app/api/copilotkit-mcp-apps/route.ts
+  - id: a2ui-fixed-schema
+    name: "Declarative UI: Fixed A2UI"
+    description: Render an A2UI tree from a fixed, server-side schema — the agent streams data into a pre-authored component tree
+    tags:
+      - generative-ui
+    route: /demos/a2ui-fixed-schema
+    animated_preview_url:
+    highlight:
+      - src/agents/a2ui_fixed.py
+      - src/agents/a2ui_schemas/flight_schema.json
+      - src/app/demos/a2ui-fixed-schema/page.tsx
+      - src/app/demos/a2ui-fixed-schema/a2ui/catalog.ts
+      - src/app/demos/a2ui-fixed-schema/a2ui/definitions.ts
+      - src/app/demos/a2ui-fixed-schema/a2ui/renderers.tsx
+      - src/app/api/copilotkit-a2ui-fixed-schema/route.ts
+  - id: open-gen-ui
+    name: "Open Generative UI: Default"
+    description: "Agent composes UI from a registered component library — distinct from Tool Rendering, which attaches a custom renderer to a *named* backend tool. Use Open Generative UI when you want the agent to assemble UI freely from a palette you control."
+    tags:
+      - generative-ui
+    route: /demos/open-gen-ui
+    animated_preview_url:
+    highlight:
+      - src/agents/open_gen_ui.py
+      - src/app/demos/open-gen-ui/page.tsx
+      - src/app/api/copilotkit-ogui/route.ts
+  - id: gen-ui-agent
+    name: "Generative UI: Agent State"
+    description: "Agent-state-driven Gen UI — the agent plans a live step list through a set_steps server tool that writes shared state; the frontend subscribes through useAgent and renders the steps inside CopilotChat's messageView.children slot."
+    tags:
+      - generative-ui
+    route: /demos/gen-ui-agent
+    animated_preview_url:
+    highlight:
+      - src/agents/gen_ui_agent.py
+      - src/app/demos/gen-ui-agent/page.tsx
+      - src/app/demos/gen-ui-agent/InlineAgentStateCard.tsx
+      - src/app/api/copilotkit/route.ts
+
+starter_validation:
+  path: examples/integrations/antigravity
