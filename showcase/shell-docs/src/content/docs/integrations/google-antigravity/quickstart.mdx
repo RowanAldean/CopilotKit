@@ -217,6 +217,21 @@ Before you begin, you'll need the following:
           uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
           curl http://localhost:8000/health
           ```
+
+          <Callout type="info" title="Already serving the agent from a FastAPI app?">
+            Keep your app and add the AG-UI route to it instead of building a new one.
+            `add_antigravity_fastapi_endpoint` mounts the same endpoint `create_antigravity_app`
+            serves, on the `FastAPI` instance you already have:
+
+            ```python
+            from ag_ui_antigravity import AntigravityAgent, add_antigravity_fastapi_endpoint
+
+            add_antigravity_fastapi_endpoint(app, agent, path="/agui")
+            ```
+
+            Point the runtime's `HttpAgent` at that path, e.g. `http://localhost:8000/agui`.
+            Your existing routes keep working alongside it.
+          </Callout>
         </Step>
 
         <Step>
