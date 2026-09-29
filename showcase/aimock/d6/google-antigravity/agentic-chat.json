@@ -38,26 +38,6 @@
     },
     {
       "match": {
-        "userMessage": "hi from the popup test",
-        "turnIndex": 0,
-        "context": "google-antigravity"
-      },
-      "response": {
-        "content": "Hello from the popup — the CopilotPopup prebuilt component is wired up and reachable. The launcher floats in the corner and the chat sits in an overlay panel."
-      }
-    },
-    {
-      "match": {
-        "userMessage": "hi from the sidebar test",
-        "turnIndex": 0,
-        "context": "google-antigravity"
-      },
-      "response": {
-        "content": "Hello from the sidebar — the CopilotSidebar prebuilt component is wired up and reachable. Anything else you would like me to confirm from inside the sidebar?"
-      }
-    },
-    {
-      "match": {
         "userMessage": "analyze data and call the tool",
         "turnIndex": 0,
         "context": "google-antigravity"
