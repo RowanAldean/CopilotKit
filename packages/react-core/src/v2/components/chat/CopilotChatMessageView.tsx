@@ -15,6 +15,8 @@ import type { WithSlots } from "../../lib/slots";
 import { renderSlot, isReactComponentType } from "../../lib/slots";
 import CopilotChatAssistantMessage from "./CopilotChatAssistantMessage";
 import type { CopilotChatFeedbackMessage } from "./CopilotChatAssistantMessage";
+import { getAssistantTurns } from "./assistant-turn";
+import type { AssistantTurn } from "./assistant-turn";
 import CopilotChatUserMessage from "./CopilotChatUserMessage";
 import CopilotChatReasoningMessage from "./CopilotChatReasoningMessage";
 import type {
@@ -79,17 +81,21 @@ const MemoizedAssistantMessage = React.memo(
     messages,
     isRunning,
     isLatest,
+    showCursor,
     AssistantMessageComponent,
     slotProps,
+    turn,
   }: {
     message: AssistantMessage;
     messages: Message[];
     isRunning: boolean;
     isLatest: boolean;
+    showCursor: boolean;
     AssistantMessageComponent: typeof CopilotChatAssistantMessage;
     slotProps?: Partial<
       React.ComponentProps<typeof CopilotChatAssistantMessage>
     >;
+    turn?: AssistantTurn;
   }) {
     return (
       <AssistantMessageComponent
@@ -97,6 +103,8 @@ const MemoizedAssistantMessage = React.memo(
         messages={messages}
         isRunning={isRunning}
         isLatest={isLatest}
+        showCursor={showCursor}
+        turn={turn}
         {...slotProps}
       />
     );
@@ -105,6 +113,7 @@ const MemoizedAssistantMessage = React.memo(
     // Only re-render if this specific message changed
     if (prevProps.message.id !== nextProps.message.id) return false;
     if (prevProps.message.content !== nextProps.message.content) return false;
+    if (prevProps.showCursor !== nextProps.showCursor) return false;
 
     // Compare tool calls if present
     const prevToolCalls = prevProps.message.toolCalls;
@@ -149,6 +158,22 @@ const MemoizedAssistantMessage = React.memo(
     if (
       (prevProps.isRunning && prevProps.isLatest) !==
       (nextProps.isRunning && nextProps.isLatest)
+    )
+      return false;
+
+    // The toolbar follows the reply (turn), which other messages can change:
+    // re-render when this message gains or loses it and, on the message that
+    // shows it, when the reply's text changes or the reply finishes.
+    const prevOwnsToolbar =
+      prevProps.turn?.lastMessageId === prevProps.message.id;
+    const nextOwnsToolbar =
+      nextProps.turn?.lastMessageId === nextProps.message.id;
+    if (prevOwnsToolbar !== nextOwnsToolbar) return false;
+    if (
+      nextOwnsToolbar &&
+      (prevProps.turn!.content !== nextProps.turn!.content ||
+        (prevProps.isRunning && prevProps.turn!.isLatest) !==
+          (nextProps.isRunning && nextProps.turn!.isLatest))
     )
       return false;
 
@@ -430,6 +455,14 @@ export type CopilotChatMessageViewProps = Omit<
        * (e.g. `useCallback`) or it reruns on every render.
        */
       transformMessages?: (messages: Message[]) => Message[];
+      /**
+       * While a reply streams, show the cursor at the end of its text, as if
+       * it were being typed. Defaults to `true`; set `false` to keep the
+       * cursor below the messages. A custom `cursor`, assistant message
+       * component, assistant `children` or `children` layout also keeps it
+       * below the messages.
+       */
+      inlineCursor?: boolean;
     } & React.HTMLAttributes<HTMLDivElement>
   >,
   "children"
@@ -456,6 +489,7 @@ export function CopilotChatMessageView({
   intelligenceIndicator,
   isRunning = false,
   transformMessages,
+  inlineCursor = true,
   children,
   className,
   ...props
@@ -831,6 +865,33 @@ export function CopilotChatMessageView({
   // ---------------------------------------------------------------------------
   // Per-message rendering helper (shared by flat and virtual paths)
   // ---------------------------------------------------------------------------
+  // Replies (turns) for the turn-scoped toolbar, from the rendered list so a
+  // transform that merges or hides messages moves the toolbar with them.
+  const toolbarPerMessage = assistantSlotProps?.toolbarScope === "message";
+  const assistantTurns = useMemo(
+    () => (toolbarPerMessage ? undefined : getAssistantTurns(renderedMessages)),
+    [renderedMessages, toolbarPerMessage],
+  );
+
+  // A streaming reply with text carries the cursor at the end of that text;
+  // otherwise (waiting for the reply, running a tool) it sits below the list.
+  // Only the default cursor and assistant message draw the inline cursor, so a
+  // custom `cursor`, assistant message or list layout keeps it below the list.
+  const lastMessage = renderedMessages[renderedMessages.length - 1];
+  const canInlineCursor =
+    inlineCursor &&
+    cursor === undefined &&
+    !children &&
+    AssistantComponent === CopilotChatAssistantMessage &&
+    !assistantSlotProps?.children;
+  const cursorMessageId =
+    canInlineCursor &&
+    isRunning &&
+    lastMessage?.role === "assistant" &&
+    lastMessage.content
+      ? lastMessage.id
+      : undefined;
+
   const renderMessageBlock = (message: Message): React.ReactElement[] => {
     const elements: (React.ReactElement | null | undefined)[] = [];
     // Only custom message renderers consume the snapshot, and resolving it
@@ -864,8 +925,10 @@ export function CopilotChatMessageView({
           messages={messages}
           isRunning={isRunning}
           isLatest={message.id === latestRenderedId}
+          showCursor={message.id === cursorMessageId}
           AssistantMessageComponent={AssistantComponent}
           slotProps={assistantSlotPropsWithFeedback}
+          turn={assistantTurns?.get(message.id)}
         />,
       );
     } else if (message.role === "user") {
@@ -951,8 +1014,9 @@ export function CopilotChatMessageView({
   // Hide the chat-level loading cursor when the last rendered message is a
   // reasoning message — the reasoning card already shows its own loading
   // indicator. A reasoning message the transform hid shows no indicator.
-  const lastMessage = renderedMessages[renderedMessages.length - 1];
-  const showCursor = isRunning && lastMessage?.role !== "reasoning";
+  // A reply streaming text carries the cursor inline instead.
+  const showCursor =
+    isRunning && lastMessage?.role !== "reasoning" && !cursorMessageId;
 
   // ---------------------------------------------------------------------------
   // Render — shared wrapper, conditional inner content (virtual vs flat)
