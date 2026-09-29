@@ -8,14 +8,13 @@
   },
   "fixtures": [
     {
-      "_comment": "gen-ui-custom pie chart — first leg: emit render_pie_chart tool call. hasToolResult:false ensures this only matches when there's no prior tool result in the conversation. Includes narration content (with 'pie chart' tokens) inline so the D5 probe's last-assistant-text assertion passes even when the LGP runtime does not re-invoke the LLM after a frontend tool result returns (the second-leg fixture below remains a safety net for runtimes that DO loop back). chunkSize: 9999 guards against the @ag-ui/langgraph 0.0.34 partial-tool-call JSON.parse class — the render_pie_chart args are large enough to otherwise stream across multiple chunks and trip RUN_ERROR.",
+      "_comment": "gen-ui-custom pie chart — first leg: emit render_pie_chart tool call. hasToolResult:false ensures this only matches when there's no prior tool result in the conversation. Includes narration content (with 'pie chart' tokens) inline so the D5 probe's last-assistant-text assertion passes even when the LGP runtime does not re-invoke the LLM after a frontend tool result returns (the second-leg fixture below remains a safety net for runtimes that DO loop back). chunkSize: 9999 guards against the @ag-ui/langgraph 0.0.34 partial-tool-call JSON.parse class — the render_pie_chart args are large enough to otherwise stream across multiple chunks and trip RUN_ERROR. The narration lives only on the turnIndex 2 leg: Antigravity streams a turn-0 text before the tool call as its own assistant message, which put the chart outside the first message and repeated the narration.",
       "match": {
         "userMessage": "Show me a pie chart of revenue by category",
         "context": "google-antigravity",
         "turnIndex": 0
       },
       "response": {
-        "content": "Pie chart rendered above — Electronics is the largest slice, followed by Clothing, Food, and Books.",
         "toolCalls": [
           {
             "id": "call_d5_render_pie_chart_001",
@@ -63,6 +62,33 @@
       },
       "response": {
         "content": "Q4 is the strongest quarter at $178k, up from $120k in Q1. The values are illustrative samples."
+      }
+    },
+    {
+      "_comment": "gen-ui-tool-based.spec.ts 'bar chart request renders SVG visualization'. Tool call only at 0, narration at 2.",
+      "match": {
+        "userMessage": "Show me a bar chart of monthly expenses",
+        "turnIndex": 0,
+        "context": "google-antigravity"
+      },
+      "response": {
+        "toolCalls": [
+          {
+            "id": "call_ag_gen_ui_custom_monthly_bar_001",
+            "name": "render_bar_chart",
+            "arguments": "{\"title\": \"Monthly Expenses\", \"description\": \"Operating expenses by month, USD thousands\", \"data\": [{\"label\": \"Jan\", \"value\": 42}, {\"label\": \"Feb\", \"value\": 38}, {\"label\": \"Mar\", \"value\": 45}, {\"label\": \"Apr\", \"value\": 51}]}"
+          }
+        ]
+      }
+    },
+    {
+      "match": {
+        "userMessage": "Show me a bar chart of monthly expenses",
+        "turnIndex": 2,
+        "context": "google-antigravity"
+      },
+      "response": {
+        "content": "April has the highest expenses at $51k. The values are illustrative samples."
       }
     }
   ]

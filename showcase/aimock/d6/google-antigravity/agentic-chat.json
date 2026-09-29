@@ -65,6 +65,36 @@
       "response": {
         "content": "Reasoning step 1: I considered the query. Reasoning step 2: I decided to invoke the analysis tool. The tool returned its structured payload, and the reasoning chain wraps the rendered tool card. Both the reasoning block and the tool card should be visible in the transcript."
       }
+    },
+    {
+      "_comment": "agentic-chat.spec.ts 'sends a typed message and gets an assistant response'.",
+      "match": {
+        "userMessage": "Say hello in one word",
+        "context": "google-antigravity"
+      },
+      "response": {
+        "content": "Hello!"
+      }
+    },
+    {
+      "_comment": "agentic-chat.spec.ts 'multi-turn conversation maintains context', first turn.",
+      "match": {
+        "userMessage": "My name is Alice",
+        "context": "google-antigravity"
+      },
+      "response": {
+        "content": "Nice to meet you, Alice!"
+      }
+    },
+    {
+      "_comment": "agentic-chat.spec.ts multi-turn, second turn: the answer must name Alice.",
+      "match": {
+        "userMessage": "What name did I just give you",
+        "context": "google-antigravity"
+      },
+      "response": {
+        "content": "You told me your name is Alice."
+      }
     }
   ]
 }
