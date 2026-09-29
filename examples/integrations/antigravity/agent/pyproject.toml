@@ -7,7 +7,7 @@ dependencies = [
   # `google-antigravity` ships platform wheels (~32 MB) that bundle the Go
   # `localharness` binary, so there is no separate download step.
   "google-antigravity==0.1.9",
-  "ag-ui-protocol==0.1.19",
+  "ag-ui-protocol==1.0.0",
   "fastapi==0.141.0",
   "uvicorn[standard]==0.52.0",
   "sse-starlette==3.4.6",
@@ -17,7 +17,7 @@ dependencies = [
   # from a pinned AG-UI commit. Swap this for `ag-ui-antigravity==<version>`
   # once it is published. Installing from git means the build environment
   # needs a git client (see docker/Dockerfile.agent).
-  "ag-ui-antigravity @ git+https://github.com/ag-ui-protocol/ag-ui@a57e07c3148a425735077cf2123916e69e86418d#subdirectory=integrations/antigravity/python",
+  "ag-ui-antigravity @ git+https://github.com/ag-ui-protocol/ag-ui@50177146f18d133cc4dd178874587c8fdc74e703#subdirectory=integrations/antigravity/python",
 ]
 
 # This project is a plain script tree (main.py + src/), not an installable
