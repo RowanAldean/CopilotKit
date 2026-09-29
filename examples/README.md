@@ -38,6 +38,7 @@ Framework integration starters demonstrating CopilotKit with various agent frame
 | [mcp-apps](./integrations/mcp-apps/)                                   | Integration of MCP Apps with CopilotKit using Three.js                               |
 | [adk](./integrations/adk/)                                             | Starter template using Google ADK with an investment analyst agent                   |
 | [adk-angular](./integrations/adk-angular/)                             | Angular starter with a Node runtime and Python Google ADK agent                      |
+| [antigravity](./integrations/antigravity/)                             | Starter template using Google Antigravity with an AG-UI FastAPI agent                |
 | [agentcore](./integrations/agentcore/)                                 | AWS Bedrock AgentCore starter with LangGraph or Strands and generative UI            |
 | [agent-spec](./integrations/agent-spec/)                               | Starter for Agent Spec with A2UI-powered frontend tool rendering                     |
 | [a2a-a2ui](./integrations/a2a-a2ui/)                                   | Starter for A2UI + A2A with a restaurant finder agent (Gemini/ADK)                   |
