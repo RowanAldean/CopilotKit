@@ -1,34 +1,45 @@
 <Steps>
   <Step>
-    ### Read and write shared state from server tools
+    ### Tell the model to read state with `get_shared_state`
 
-    The adapter's `get_state()` and `set_state()` give a server tool the
-    thread's shared state. `get_state()` returns what the UI sent with the
-    current run, or what the last `set_state()` stored, whichever is newer.
-    `set_state()` replaces it and streams a `STATE_SNAPSHOT` to
-    the browser as the tool finishes, so any component subscribed with
-    `useAgent` re-renders while the agent is still running.
+    Antigravity sets an agent's instructions once, when the harness session
+    starts, and the adapter forwards only the user's messages. Shared state
+    therefore never reaches the prompt on its own. Instead, the adapter gives
+    every agent a built-in `get_shared_state()` tool that returns the thread's
+    shared state: what the UI sent with the current run (including edits made
+    with `agent.setState`), or what a server tool last stored, whichever is
+    newer. Say in the system instructions when to call it:
 
-    <DemoCode file="src/agents/beautiful_chat.py" region="shared-state-tools" />
+    <DemoCode file="src/agents/shared_state.py" region="shared-state-read-write-agent" />
 
-    Both helpers only work inside a server tool, where the adapter knows which
-    thread the call belongs to. Called anywhere else, they raise.
+    The tool is silent: it emits no `TOOL_CALL_*` events, so no tool card
+    appears in the chat. Pass `expose_shared_state=False` to
+    `AntigravityAgent` to remove it, or define a tool of your own with the same
+    name to replace it.
 
   </Step>
   <Step>
-    ### Tell the model to read state through a tool
+    ### Write state from a server tool
 
-    Antigravity sets an agent's instructions once, when the harness session
-    starts, and the adapter forwards only the user's messages. The model
-    therefore never sees shared state on its own. Give it a reading tool like
-    `get_todos` above, and say in the system instructions when to call it, so
-    it works from the UI's latest values instead of the ones it last wrote.
+    Server tools are plain Python functions passed as `tools=[...]`. Inside
+    one, the adapter's `get_state()` returns the thread's shared state and
+    `set_state()` replaces it. `set_state()` streams a `STATE_SNAPSHOT` to the
+    browser straight away, before the tool's own result, so any component
+    subscribed with `useAgent` re-renders while the agent is still running.
+
+    <DemoCode file="src/agents/shared_state.py" region="shared-state-write-tool" />
+
+    Spread `get_state()` into the new value, as above: `set_state()` replaces
+    the whole object, so leaving it out drops the keys the UI owns, such as
+    `preferences`. Both helpers work only inside a server tool, where the
+    adapter knows which thread the call belongs to. Called anywhere else, they
+    raise.
 
   </Step>
 </Steps>
 
-<Callout type="warn" title="State the model does not ask for stays invisible">
-  UI edits reach the agent only when a tool reads them. The pattern that other
-  frameworks use, folding preferences into the system prompt on every run, is
-  not available with Antigravity.
+<Callout type="warn" title="The model sees state only when it asks">
+  Other frameworks can fold the UI's state into the system prompt on every
+  run. With Antigravity the model has to call `get_shared_state`. If the
+  instructions do not tell it to, UI edits do not reach that answer.
 </Callout>
