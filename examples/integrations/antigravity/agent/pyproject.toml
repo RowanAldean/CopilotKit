@@ -17,7 +17,7 @@ dependencies = [
   # from a pinned AG-UI commit. Swap this for `ag-ui-antigravity==<version>`
   # once it is published. Installing from git means the build environment
   # needs a git client (see docker/Dockerfile.agent).
-  "ag-ui-antigravity @ git+https://github.com/ag-ui-protocol/ag-ui@61e11031ba4b70ddcb1ba3a2756a906b4349b9ac#subdirectory=integrations/antigravity/python",
+  "ag-ui-antigravity @ git+https://github.com/ag-ui-protocol/ag-ui@a62e99b5def431437f150e29fef2cd108621fdfd#subdirectory=integrations/antigravity/python",
 ]
 
 # This project is a plain script tree (main.py + src/), not an installable
