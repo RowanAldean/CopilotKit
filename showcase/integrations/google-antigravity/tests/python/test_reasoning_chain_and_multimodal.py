@@ -47,7 +47,12 @@ class TestReasoningChainAgent:
         # data-tool-name="get_stock_price" / "roll_dice"; the page has
         # branded renderers for get_weather and search_flights.
         names = [t.__name__ for t in tool_rendering_reasoning_chain.TOOLS]
-        assert names == ["get_weather", "search_flights", "get_stock_price", "roll_dice"]
+        assert names == [
+            "get_weather",
+            "search_flights",
+            "get_stock_price",
+            "roll_dice",
+        ]
 
     def test_runs_on_the_reasoning_model(self, captured_build):
         tool_rendering_reasoning_chain.tool_rendering_reasoning_chain_agent()

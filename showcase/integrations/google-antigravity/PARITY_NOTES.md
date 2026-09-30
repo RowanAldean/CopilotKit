@@ -110,8 +110,7 @@ prompts at turnIndex 0. `tool-rendering-reasoning-chain` has its own agent
 dice pill needs) and fixtures. Every tool leg carries `reasoning`, so each turn
 mounts at least one reasoning block. Leg k of a chain sits at base+2k and the
 narration at base+4; the probe and the sequential e2e test run stocks, dice and
-flights in one thread, so the dice and flights ladders repeat at offsets 5 and
-10. Measured: a tool leg that also carries `content` and/or `reasoning` still
+flights in one thread, so the dice and flights ladders repeat at offsets 5 and 10. Measured: a tool leg that also carries `content` and/or `reasoning` still
 advances aimock's assistant count by exactly 2. The harness streams a thought
 part concurrently with the tool call, so a `TOOL_CALL_*` group can arrive while
 a reasoning message is still open; `@ag-ui/client`'s `verifyEvents` accepts

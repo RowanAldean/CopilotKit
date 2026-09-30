@@ -47,9 +47,7 @@ TOOLS = [get_weather, search_flights, get_stock_price, roll_dice]
 
 
 def tool_rendering_reasoning_chain_agent():
-    return build(
-        system_instructions=SYSTEM_PROMPT, tools=TOOLS, model=REASONING_MODEL
-    )
+    return build(system_instructions=SYSTEM_PROMPT, tools=TOOLS, model=REASONING_MODEL)
 
 
 # @endregion[reasoning-chain-agent]
