@@ -3,7 +3,7 @@
 # once it merges. Written URL-first (installs the ag-ui-antigravity project at
 # that commit) so the pin validator treats it as an intentional VCS install. google-antigravity ships platform wheels bundling the Go
 # localharness binary (manylinux x86_64 and aarch64 both published).
-git+https://github.com/ag-ui-protocol/ag-ui@a62e99b5def431437f150e29fef2cd108621fdfd#subdirectory=integrations/antigravity/python
+git+https://github.com/ag-ui-protocol/ag-ui@71eafd25b3451f57595f6f7abd45e950719f57ae#subdirectory=integrations/antigravity/python
 google-antigravity==0.1.9
 ag-ui-protocol==1.0.0
 # Prompt assembly, validation and the validate->retry loop behind the

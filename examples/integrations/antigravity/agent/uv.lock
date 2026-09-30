@@ -19,7 +19,7 @@ wheels = [
 [[package]]
 name = "ag-ui-antigravity"
 version = "0.1.0"
-source = { git = "https://github.com/ag-ui-protocol/ag-ui?subdirectory=integrations%2Fantigravity%2Fpython&rev=a62e99b5def431437f150e29fef2cd108621fdfd#a62e99b5def431437f150e29fef2cd108621fdfd" }
+source = { git = "https://github.com/ag-ui-protocol/ag-ui?subdirectory=integrations%2Fantigravity%2Fpython&rev=71eafd25b3451f57595f6f7abd45e950719f57ae#71eafd25b3451f57595f6f7abd45e950719f57ae" }
 dependencies = [
     { name = "ag-ui-protocol" },
     { name = "fastapi" },
@@ -76,7 +76,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ag-ui-antigravity", git = "https://github.com/ag-ui-protocol/ag-ui?subdirectory=integrations%2Fantigravity%2Fpython&rev=a62e99b5def431437f150e29fef2cd108621fdfd" },
+    { name = "ag-ui-antigravity", git = "https://github.com/ag-ui-protocol/ag-ui?subdirectory=integrations%2Fantigravity%2Fpython&rev=71eafd25b3451f57595f6f7abd45e950719f57ae" },
     { name = "ag-ui-protocol", specifier = "==1.0.0" },
     { name = "fastapi", specifier = "==0.141.0" },
     { name = "google-antigravity", specifier = "==0.1.9" },
