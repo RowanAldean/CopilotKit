@@ -31,6 +31,7 @@ from starlette.responses import JSONResponse  # noqa: E402
 
 from agents._common import shared_pool  # noqa: E402
 from agents.registry import build_registry  # noqa: E402
+from agents.a2ui_dynamic import close_http_client as close_a2ui_http_client  # noqa: E402
 from agents.subagents import close_http_client  # noqa: E402
 
 # @region[agent-server]
@@ -61,6 +62,7 @@ async def _lifespan(scoped_app):
         await shared_pool().shutdown()
     finally:
         await close_http_client()
+        await close_a2ui_http_client()
 
 
 app.router.lifespan_context = _lifespan

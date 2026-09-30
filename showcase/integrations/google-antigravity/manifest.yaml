@@ -16,6 +16,7 @@ sort_order: 61
 generative_ui:
   - constrained-explicit
   - a2ui-fixed-schema
+  - a2ui-dynamic-schema
 interaction_modalities:
   - sidebar
   - embedded
@@ -25,6 +26,9 @@ managed_platform:
   url: https://antigravity.google
 interrupt_pattern: promise-based
 auth_pattern: runtime-onrequest
+# The config page publishes tone/expertise/length through useAgentContext and
+# the agent reads it from the run's context (get_app_context).
+agent_config_pattern: shared-state
 features:
   - cli-start
   - beautiful-chat
@@ -50,39 +54,27 @@ features:
   - a2ui-fixed-schema
   - open-gen-ui
   - gen-ui-agent
-not_supported_features:
-  # The adapter forwards only user messages to Antigravity; RunAgentInput
-  # state, context and forwardedProps are not folded into the prompt yet.
   - shared-state-read
+  - shared-state-read-write
   - readonly-state-agent-context
   - agent-config
-  # Server tools can read and write state (get_state/set_state), but the model
-  # only sees state through a tool: read-write needs the UI's preferences in
-  # the prompt, and streaming needs tool arguments streamed token by token,
-  # which the harness does not do.
-  - shared-state-read-write
-  - shared-state-streaming
-  # Non-text message parts are dropped by the adapter.
   - multimodal
-  # Quarantined upstream (react-core resume-path hook bug); langgraph-python
-  # declares these too.
-  - gen-ui-interrupt
-  - interrupt-headless
-  # The native Gemini path surfaces reasoning (see PARITY_NOTES.md
-  # "Reasoning"), but this package has no reasoning fixtures yet, so these
-  # three cells are not probed.
   - reasoning-default
   - reasoning-custom
   - tool-rendering-reasoning-chain
-  # No standalone cell for these yet (a2ui-fixed-schema has one). See
-  # PARITY_NOTES.md "Not supported" and "Beautiful Chat surfaces".
   - declarative-gen-ui
   - a2ui-recovery
   - declarative-hashbrown
   - declarative-json-render
-  # The sandbox-function descriptors the model needs reach it only as agent
-  # context, which the adapter does not fold into the prompt yet.
   - open-gen-ui-advanced
+not_supported_features:
+  # Streaming state needs tool arguments streamed token by token; the harness
+  # hands each tool call over with its arguments complete.
+  - shared-state-streaming
+  # Quarantined upstream (react-core resume-path hook bug); langgraph-python
+  # declares these too.
+  - gen-ui-interrupt
+  - interrupt-headless
 demos:
   - id: cli-start
     name: CLI Start Command
@@ -377,6 +369,173 @@ demos:
       - src/app/demos/gen-ui-agent/page.tsx
       - src/app/demos/gen-ui-agent/InlineAgentStateCard.tsx
       - src/app/api/copilotkit/route.ts
+  - id: shared-state-read
+    name: "Shared State: Read-only"
+    description: "Recipe editor publishes form state via agent.setState; the model reads it through the adapter's silent built-in get_shared_state tool and has no tool that mutates it."
+    tags:
+      - agent-state
+    route: /demos/shared-state-read
+    animated_preview_url:
+    highlight:
+      - src/agents/shared_state.py
+      - src/app/demos/shared-state-read/page.tsx
+      - src/app/api/copilotkit/route.ts
+  - id: shared-state-read-write
+    name: "Shared State: Read + Write"
+    description: "Bidirectional shared state — the UI writes preferences via agent.setState and the model reads them with the built-in get_shared_state; the agent writes notes with a set_notes server tool (set_state)."
+    tags:
+      - agent-state
+    route: /demos/shared-state-read-write
+    animated_preview_url:
+    highlight:
+      - src/agents/shared_state.py
+      - src/app/demos/shared-state-read-write/page.tsx
+      - src/app/demos/shared-state-read-write/preferences-card.tsx
+      - src/app/demos/shared-state-read-write/notes-card.tsx
+      - src/app/api/copilotkit/route.ts
+  - id: readonly-state-agent-context
+    name: "Shared State: Frontend Context"
+    description: Frontend provides read-only context via useAgentContext; the model reads it through the adapter's built-in get_app_context tool
+    tags:
+      - agent-state
+    route: /demos/readonly-state-agent-context
+    animated_preview_url:
+    highlight:
+      - src/agents/app_context.py
+      - src/app/demos/readonly-state-agent-context/page.tsx
+      - src/app/api/copilotkit/route.ts
+  - id: agent-config
+    name: Agent Config Object
+    description: Forward a typed config object (tone / expertise / response length) through useAgentContext; the model reads it each turn with get_app_context and applies a static rulebook
+    tags:
+      - platform
+    route: /demos/agent-config
+    animated_preview_url:
+    highlight:
+      - src/agents/agent_config.py
+      - src/app/demos/agent-config/page.tsx
+      - src/app/demos/agent-config/config-card.tsx
+      - src/app/demos/agent-config/use-agent-config.ts
+      - src/app/demos/agent-config/config-types.ts
+      - src/app/api/copilotkit-agent-config/route.ts
+  - id: multimodal
+    name: Attachments
+    description: Image and PDF uploads via CopilotChat attachments, forwarded to Gemini as inline media
+    tags:
+      - chat-ui
+    route: /demos/multimodal
+    animated_preview_url:
+    highlight:
+      - src/agents/multimodal.py
+      - src/app/demos/multimodal/page.tsx
+      - src/app/demos/multimodal/sample-attachment-buttons.tsx
+      - src/app/api/copilotkit-multimodal/route.ts
+  - id: reasoning-default
+    name: "Reasoning: Default"
+    description: Built-in CopilotChatReasoningMessage rendering with no slot override.
+    tags:
+      - chat-ui
+    route: /demos/reasoning-default
+    animated_preview_url:
+    highlight:
+      - src/app/demos/reasoning-default/page.tsx
+      - src/app/demos/reasoning-default/suggestions.ts
+      - src/agents/reasoning.py
+  - id: reasoning-custom
+    name: "Reasoning: Custom"
+    description: Visible reasoning/thinking chain alongside the final answer
+    tags:
+      - chat-ui
+    route: /demos/reasoning-custom
+    animated_preview_url:
+    highlight:
+      - src/app/demos/reasoning-custom/page.tsx
+      - src/app/demos/reasoning-custom/reasoning-block.tsx
+      - src/agents/reasoning.py
+      - src/app/api/copilotkit/route.ts
+  - id: tool-rendering-reasoning-chain
+    name: "Generative UI: Tool calls + reasoning"
+    description: "Per-tool renderers (WeatherCard, FlightListCard, custom catchall) interleaved with a reasoningMessage slot rendering the agent's reasoning tokens — combines reasoning-display + tool-rendering in one chat surface."
+    tags:
+      - generative-ui
+    route: /demos/tool-rendering-reasoning-chain
+    animated_preview_url:
+    highlight:
+      - src/agents/tool_rendering_reasoning_chain.py
+      - src/app/demos/tool-rendering-reasoning-chain/page.tsx
+      - src/app/demos/tool-rendering-reasoning-chain/reasoning-block.tsx
+      - src/app/demos/tool-rendering-reasoning-chain/weather-card.tsx
+      - src/app/demos/tool-rendering-reasoning-chain/flight-list-card.tsx
+      - src/app/demos/tool-rendering-reasoning-chain/custom-catchall-renderer.tsx
+      - src/app/api/copilotkit/route.ts
+  - id: declarative-gen-ui
+    name: "Declarative UI: Dynamic A2UI"
+    description: "Canonical A2UI BYOC — custom catalog (Card/StatusBadge/Metric/InfoRow/PrimaryButton) wired via a2ui.catalog on the provider; a generate_a2ui server tool renders the surface."
+    tags:
+      - generative-ui
+    route: /demos/declarative-gen-ui
+    animated_preview_url:
+    highlight:
+      - src/agents/a2ui_dynamic.py
+      - src/app/demos/declarative-gen-ui/page.tsx
+      - src/app/demos/declarative-gen-ui/a2ui/catalog.ts
+      - src/app/demos/declarative-gen-ui/a2ui/definitions.ts
+      - src/app/demos/declarative-gen-ui/a2ui/renderers.tsx
+      - src/app/api/copilotkit-declarative-gen-ui/route.ts
+  - id: a2ui-recovery
+    name: A2UI Error Recovery
+    description: "Makes the A2UI validate->retry recovery loop visible — an invalid first render heals to a valid one, and an always-invalid render shows a graceful recovery-exhausted fallback. Backend-owned generate_a2ui server tool (injectA2UITool=false); reuses the declarative-gen-ui catalog."
+    tags:
+      - generative-ui
+    route: /demos/a2ui-recovery
+    animated_preview_url:
+    highlight:
+      - src/agents/a2ui_recovery.py
+      - src/agents/a2ui_dynamic.py
+      - src/app/demos/a2ui-recovery/page.tsx
+      - src/app/demos/a2ui-recovery/suggestions.ts
+      - src/app/api/copilotkit-a2ui-recovery/route.ts
+  - id: declarative-json-render
+    name: "Declarative UI: json-render"
+    description: Hierarchical JSON UI spec rendered via @json-render/react, with a Zod-validated catalog (MetricCard + PieChart + BarChart)
+    tags:
+      - generative-ui
+    route: /demos/declarative-json-render
+    animated_preview_url:
+    highlight:
+      - src/agents/byoc_json_render.py
+      - src/app/demos/declarative-json-render/page.tsx
+      - src/app/demos/declarative-json-render/json-render-renderer.tsx
+      - src/app/demos/declarative-json-render/registry.tsx
+      - src/app/demos/declarative-json-render/catalog.ts
+      - src/app/demos/declarative-json-render/suggestions.ts
+      - src/app/api/copilotkit-declarative-json-render/route.ts
+  - id: declarative-hashbrown
+    name: "Declarative UI: Hashbrown"
+    description: Structured output via @hashbrownai/react, rendering a sales dashboard catalog (MetricCard + PieChart + BarChart)
+    tags:
+      - generative-ui
+    route: /demos/declarative-hashbrown
+    animated_preview_url:
+    highlight:
+      - src/agents/byoc_hashbrown.py
+      - src/app/demos/declarative-hashbrown/page.tsx
+      - src/app/demos/declarative-hashbrown/hashbrown-renderer.tsx
+      - src/app/demos/declarative-hashbrown/suggestions.ts
+      - src/app/api/copilotkit-declarative-hashbrown/route.ts
+  - id: open-gen-ui-advanced
+    name: "Open Generative UI: Custom"
+    description: Same Open Generative UI surface, with the iframe-rendered components able to call back into frontend sandbox functions (e.g., a Calculator app whose buttons trigger handlers in the host page).
+    tags:
+      - generative-ui
+    route: /demos/open-gen-ui-advanced
+    animated_preview_url:
+    highlight:
+      - src/agents/open_gen_ui_advanced.py
+      - src/app/demos/open-gen-ui-advanced/page.tsx
+      - src/app/demos/open-gen-ui-advanced/sandbox-functions.ts
+      - src/app/demos/open-gen-ui-advanced/suggestions.ts
+      - src/app/api/copilotkit-ogui/route.ts
 
 starter_validation:
   path: examples/integrations/antigravity

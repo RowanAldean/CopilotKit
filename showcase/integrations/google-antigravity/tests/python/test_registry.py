@@ -37,6 +37,16 @@ EXPECTED_PATHS = {
     "mcp-apps",
     "a2ui_fixed_schema",
     "open_gen_ui",
+    "open_gen_ui_advanced",
+    "declarative_gen_ui",
+    "a2ui_recovery",
+    "declarative_hashbrown",
+    "declarative_json_render",
+    "shared-state-read",
+    "shared-state-read-write",
+    "readonly-state-agent-context",
+    "agent-config-demo",
+    "multimodal-demo",
     "default",
 }
 

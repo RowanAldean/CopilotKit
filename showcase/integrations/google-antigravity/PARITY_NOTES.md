@@ -100,58 +100,89 @@ langgraph-python.
 
 ## Reasoning
 
-**Measured: surfaced, but not yet probed.** aimock replays a fixture's
-`reasoning` field as Gemini thought parts, the harness turns them
-into `THINKING` steps, and the adapter emits AG-UI reasoning events. Driving
-the adapter at llamaindex's "sky appears blue" reasoning fixture yields:
+**Supported.** aimock replays a fixture's `reasoning` field as Gemini thought
+parts, the harness turns them into `THINKING` steps, and the adapter emits
+`REASONING_START`, `REASONING_MESSAGE_START`/`CONTENT`/`END` and
+`REASONING_END`. `reasoning-default` and `reasoning-custom` share
+`reasoning_agent()` and `aimock/d6/google-antigravity/reasoning.json`, both
+prompts at turnIndex 0. `tool-rendering-reasoning-chain` has its own agent
+(`agents/tool_rendering_reasoning_chain.py`, which adds the `roll_dice` tool the
+dice pill needs) and fixtures. Every tool leg carries `reasoning`, so each turn
+mounts at least one reasoning block. Leg k of a chain sits at base+2k and the
+narration at base+4; the probe and the sequential e2e test run stocks, dice and
+flights in one thread, so the dice and flights ladders repeat at offsets 5 and
+10. Measured: a tool leg that also carries `content` and/or `reasoning` still
+advances aimock's assistant count by exactly 2. The harness streams a thought
+part concurrently with the tool call, so a `TOOL_CALL_*` group can arrive while
+a reasoning message is still open; `@ag-ui/client`'s `verifyEvents` accepts
+this.
 
-```
-RUN_STARTED, REASONING_START, REASONING_MESSAGE_START,
-REASONING_MESSAGE_CONTENT x17, REASONING_MESSAGE_END, REASONING_END,
-TEXT_MESSAGE_START, TEXT_MESSAGE_CONTENT x16, TEXT_MESSAGE_END, RUN_FINISHED
-```
+## Shared state and agent context
 
-`reasoning-default`, `reasoning-custom` and `tool-rendering-reasoning-chain`
-stay in `not_supported_features` until this package has reasoning fixtures of
-its own and the three cells pass against them. Their pages, registry entries
-and runtime-route names are deliberately left in place (same treatment as
-`threadid-frontend-tool-roundtrip` below).
+Antigravity fixes an agent's instructions when the harness session starts, and
+the adapter forwards only user messages, so the reference's pattern of folding
+`RunAgentInput.state` or `.context` into the system prompt every turn
+(`PreferencesInjectorMiddleware`, `CopilotKitMiddleware`) is not available.
+Instead the adapter gives every agent two silent built-in tools:
+`get_shared_state()` returns the thread's shared state, including
+`agent.setState` edits, and `get_app_context()` returns the run's
+`useAgentContext` entries as `[{description, value}]`. They emit no TOOL_CALL
+events, so no card appears in the chat. `shared-state-read`,
+`shared-state-read-write`, `readonly-state-agent-context` and `agent-config`
+each tell the model in their instructions to call the relevant tool before
+answering; `agent-config` keeps the reference's rulebook as static instructions
+and has the model re-read the values every turn. The write side of
+`shared-state-read-write` is a `set_notes` server tool using
+`get_state()`/`set_state()`. The trade-off: the model sees UI state only when it
+calls the tool. The fixtures stage the read as its own leg (tool at k, answer at
+k+2), so a probe turn costs 3 assistant messages; the six-turn `agent-config`
+probe sits at 0/2, 3/5 … 15/17.
+
+## Multimodal
+
+The adapter forwards inline `image`/`document`/`audio`/`video` parts to Gemini
+as inline media; a remote URL becomes a text note for the model. The
+`multimodal` cell has its own route (`/api/copilotkit-multimodal`) and agent
+(`multimodal-demo`). Unlike langgraph-python it ships no
+`legacy-converter-shim.tsx`: the shim appends legacy `binary` parts, which
+AG-UI 1.0 rejects at `RunAgentInput` validation. PDFs reach the model as
+documents, not flattened text. aimock matches on the prompt text only, so
+fixture selection does not prove the attachment arrived; a capturing proxy saw
+`inlineData` `image/png` and `application/pdf` in the Gemini requests, in both
+orders in one thread (2026-09-30). The same forwarding covers the attachments
+`headless-complete`'s composer offers.
+
+## Declarative and open generative UI
+
+`declarative-gen-ui` and `a2ui-recovery` are backend-owned. `generate_a2ui` is
+a server tool (`src/agents/a2ui_dynamic.py`) that reads the page's context and
+A2UI schema with `get_context()`, makes its own `render_a2ui` Gemini call
+(forced with `toolConfig` ANY; `components`/`data` declared as JSON strings,
+because Gemini fills a property-less array-of-object with `{}`), validates the
+result with the A2UI toolkit, retries up to 3 times with the errors in the
+prompt, and returns `a2ui_operations` or the `a2ui_recovery_exhausted` envelope
+for the A2UI middleware. Both routes set `injectA2UITool: false`, which is
+load-bearing: an injected `render_a2ui` frontend tool would park in the
+harness. The surface arrives whole in `TOOL_CALL_RESULT`, with no progressive
+streaming and no "Retrying… (N/M)" state between attempts; validation is
+structural only. `a2ui-recovery` uses its own prompts
+(`d5-a2ui-recovery.ts` PROMPTS entry and the page's `suggestions.ts`).
+`declarative-hashbrown` and `declarative-json-render` are tool-less agents
+whose instructions make them answer with the renderer's JSON as plain text
+(`response_schema` would deliver it as state, not text). `open-gen-ui-advanced`
+works now that the model can read app context: the sandbox-function
+descriptors are readable via `get_app_context`, and are also written into the
+system prompt.
 
 ## Not supported
 
 Declared in `manifest.yaml` under `not_supported_features`, with reasons:
 
-- `shared-state-read`, `readonly-state-agent-context`, `agent-config` — the
-  adapter forwards only user messages to Antigravity; `RunAgentInput` state,
-  context, and `forwardedProps` are not folded into the prompt yet. Server
-  tools can read state (`get_state()`), but the model cannot.
-- `shared-state-read-write`, `shared-state-streaming` — server tools can now
-  write state (`set_state()`, which is what `gen-ui-agent`, `subagents` and
-  beautiful-chat's Task Manager use), but read-write also needs the model to
-  see the UI's preferences (above), and streaming needs tool arguments streamed
-  token by token, which the harness does not do (it hands over whole argument
-  dicts).
-- `multimodal` — non-text message parts are dropped by the adapter.
-- `reasoning-default`, `reasoning-custom`, `tool-rendering-reasoning-chain`
-  — the Go harness drops the model's `reasoning_content` deltas, so no
-  thinking step and no reasoning surface ever reaches the chat. Measured;
-  see "Reasoning" above.
+- `shared-state-streaming` — streaming needs tool arguments streamed token by
+  token; the harness hands over whole argument dicts.
 - `gen-ui-interrupt`, `interrupt-headless` — quarantined upstream (a
   `@copilotkit/react-core/v2` resume-path hook bug); langgraph-python, the
   reference integration, declares these unsupported too.
-- `open-gen-ui-advanced` — the page's sandbox functions (`evaluateExpression`,
-  `notifyHost`) are described to the model only through agent context, which
-  this adapter drops (first bullet), so the model cannot know what to call.
-  The basic `open-gen-ui` cell works: its tool comes through
-  `RunAgentInput.tools`, and the frontend handler answers it.
-- `declarative-gen-ui`, `a2ui-recovery`, `declarative-hashbrown`,
-  `declarative-json-render` — no standalone cell (agent or page) exists in
-  this package. Not investigated; `a2ui-fixed-schema` shows the A2UI
-  middleware path itself works.
-- Attachments on `headless-complete`. The page's composer offers file
-  attachments (`useAttachments`), but the adapter drops non-text message
-  parts (the `multimodal` gap above), so an attached file never reaches the
-  model. Only the text of the message does, and nothing tells the user.
 
 ## Beautiful Chat surfaces
 
@@ -185,15 +216,12 @@ Playwright specs against aimock on demand.
 
 **The on-demand E2E job runs the package's WHOLE `tests/e2e` directory** — its
 final step is a bare `BASE_URL=http://localhost:3000 npx playwright test
---reporter=list`, with no spec filter. That includes
-`reasoning-default.spec.ts`, `reasoning-custom.spec.ts` and
-`tool-rendering-reasoning-chain.spec.ts`, which **are expected to fail here**
-for as long as reasoning is unsupported (see "Reasoning"): they assert a
-reasoning surface the Go harness can never produce. Those three specs are
-byte-identical fleet copies of the shared specs and **must not be edited or
-skipped** — iron rule 1. Read a red on-demand run against the
+--reporter=list`, with no spec filter. The specs are byte-identical fleet
+copies of the shared specs and **must not be edited or skipped** — iron rule 1
+(`a2ui-recovery.spec.ts` carries this package's own prompts, which the probe's
+per-slug PROMPTS table requires). Read a red on-demand run against the
 `not_supported_features` list in `manifest.yaml` before treating it as a
-regression; anything outside those three specs is real.
+regression.
 
 `BASE_URL` (not `PLAYWRIGHT_BASE_URL`) is the env var `playwright.config.ts`
 honours for `use.baseURL`, and `use.extraHTTPHeaders` pins
@@ -344,11 +372,10 @@ Intelligence repo, not this one — so the quickstart's Callout still tells
 readers to clone the CopilotKit repository and copy
 `examples/integrations/antigravity` until that entry ships.
 
-What is deliberately absent: no setup snippets for concepts this adapter
-doesn't support (shared state, reasoning surfaces, declarative/open
-generative UI) — writing a snippet for a concept with nothing behind it would
-document a capability that doesn't exist, which is worse than the concept
-rendering as absent.
+What is deliberately absent: no setup snippet for state streaming, the one
+concept this adapter can't support (`state-streaming-setup.mdx` says so and
+shows the per-tool-call alternative) — writing a snippet for a concept with
+nothing behind it would document a capability that doesn't exist.
 
 ## Verified cells
 

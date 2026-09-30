@@ -45,6 +45,9 @@ const agentNames = [
   "reasoning-default",
   "reasoning-custom",
   "subagents",
+  "shared-state-read",
+  "shared-state-read-write",
+  "readonly-state-agent-context",
   "default",
 ];
 
