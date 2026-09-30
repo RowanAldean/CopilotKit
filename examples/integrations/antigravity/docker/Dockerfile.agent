@@ -18,7 +18,6 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen
 
 COPY main.py ./
-COPY src/ ./src/
 
 # Antigravity's Go harness needs a writable workspace (it does real file and
 # shell work) and a save_dir for session trajectories. Short paths on purpose:

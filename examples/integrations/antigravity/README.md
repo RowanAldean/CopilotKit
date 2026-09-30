@@ -19,39 +19,33 @@ Two consequences shape this starter:
   (default `/data/ws` in Docker, `/tmp/agws` outside it). Keep the path
   **short**: a long, high-entropy path (a macOS temp directory is ~75
   characters) makes the model reproduce it wrongly inside a tool call, and the
-  harness treats the bad path as fatal. Measured on `gpt-4.1-mini`: 0/14 runs
+  harness treats the bad path as fatal. Measured: 0/14 runs
   failed with a 9-character workspace, 2/14 with a 75-character one. Nothing in
   the resulting error message points at path length.
-- **The model call happens in Go, not Python.** So Python cannot attach headers
-  to it — which is why this starter has a shim (below).
+- **The model call happens in Go, not Python.** So Python cannot attach
+  per-request headers to it. Anything the call needs — the API key, a custom
+  endpoint, fixed headers — is configured on the agent up front.
 
 Conversation history lives inside the harness process, keyed by thread. That is
-also why this starter has no shared-state demo: the adapter surfaces state
-snapshots only from structured output, and there is no writable client state
-yet.
+also why the model sees shared state only through tools: server tools can read
+and write it with the adapter's `get_state()` / `set_state()`, and this starter
+keeps to chat and tools.
 
 ## Prerequisites
 
 - Node.js 20+
 - Python 3.10+ and [uv](https://docs.astral.sh/uv/getting-started/installation/)
   (`npm install` runs `uv sync` for you)
-- An **OpenAI API key**. The starter talks to an OpenAI-compatible model, and
-  `google-antigravity` 0.1.9's OpenAI path carries only a `base_url` — no API
-  key field, and the Go harness reads no `OPENAI_API_KEY`. A small in-process
-  shim (`agent/src/openai_proxy.py`) adds the `Authorization` header and
-  normalizes the SDK's Gemini-flavoured tool schemas into what OpenAI accepts.
-  Point `OPENAI_BASE_URL` at Ollama or LM Studio to run against a local model
-  instead.
-
-  **Prefer Gemini?** Then you need no key of the OpenAI kind and no shim at
-  all. In `agent/main.py`, delete the `start_background(...)` call and give the
-  agent `api_key=os.environ["GEMINI_API_KEY"]` with **no** `base_url` — the
-  native path needs neither the injected header nor the schema rewrite.
+- A **Gemini API key** from [Google AI Studio](https://aistudio.google.com/apikey),
+  as `GEMINI_API_KEY`. That is the only name the Antigravity SDK reads, so an
+  ADK-style `GOOGLE_API_KEY` is not picked up. To send the same Gemini requests
+  to another Gemini-compatible server, such as a gateway, set
+  `GOOGLE_GEMINI_BASE_URL` as well.
 
 ## Getting started
 
 ```bash
-cp .env.example .env      # then put your OPENAI_API_KEY in it
+cp .env.example .env      # then put your GEMINI_API_KEY in it
 npm install               # also creates agent/.venv via `uv sync`
 npm run dev               # Next.js on :3000, the agent on :8000
 ```
@@ -80,9 +74,9 @@ value — no proxy tool, no fire-and-forget workaround.
 ## How the pieces fit
 
 ```
-browser ──► /api/copilotkit  ──►  agent :8000  ──►  Go localharness ──► shim :8931 ──► model
- (React)     (CopilotKit         (FastAPI +          (plans, runs        (adds auth,
-              runtime route)      ag-ui-antigravity)  tools, calls        fixes schemas)
+browser ──► /api/copilotkit  ──►  agent :8000  ──►  Go localharness ──► Gemini
+ (React)     (CopilotKit         (FastAPI +          (plans, runs
+              runtime route)      ag-ui-antigravity)  tools, calls
                                                       the model)
 ```
 
@@ -93,12 +87,6 @@ browser ──► /api/copilotkit  ──►  agent :8000  ──►  Go localha
   `/health` route. Built-ins are trimmed on purpose: `search_web` returns an
   empty summary without Google credentials and the model retries it forever,
   and `ask_question` would park on an interrupt this UI never answers.
-- **`agent/src/openai_proxy.py`** — the shim. It starts on a daemon thread,
-  injects `Authorization: Bearer $OPENAI_API_KEY`, rewrites proto-style tool
-  schemas (`"STRING"` → `"string"`), and forwards to `OPENAI_BASE_URL`. Note
-  the SDK wants the **root** URL, not `.../v1` — the harness appends
-  `/v1/chat/completions` itself. Delete this file once the SDK supports
-  authenticated OpenAI endpoints natively.
 - **`src/app/api/copilotkit/[[...slug]]/route.ts`** — the CopilotKit runtime
   route. It registers an `HttpAgent` pointed at `AGENT_URL` under the name
   exported from `src/agent.ts`, and is what the browser talks to.
@@ -132,12 +120,12 @@ agent in one container, the way a platform like Railway deploys it:
 
 ```bash
 docker build -t antigravity-starter .
-docker run -p 3000:3000 -e OPENAI_API_KEY=sk-... antigravity-starter
+docker run -p 3000:3000 -e GEMINI_API_KEY=... antigravity-starter
 ```
 
 **Two containers plus a mock model** (`docker-compose.test.yml`) — the smoke
 suite. It boots [aimock](https://www.npmjs.com/package/@copilotkit/aimock) with
-the fixtures in `./fixtures`, points the agent's shim at it, and runs the shared
+the fixtures in `./fixtures`, points the agent's Gemini endpoint at it, and runs the shared
 Playwright smoke spec against the app. No API key needed, no network calls:
 
 ```bash
@@ -184,11 +172,9 @@ it) before treating the Channel as working.
 
 ## Troubleshooting
 
-**`OPENAI_API_KEY must be set to use the OpenAI shim.`** — the agent exits at
-import without it. Put it in `.env`, or switch to the Gemini path (above).
-
-**`Port 8931 is already in use`** — the shim's port. Set
-`ANTIGRAVITY_SHIM_PORT` to something free.
+**`a Gemini API key is required`** — `GEMINI_API_KEY` is missing. Put it in
+`.env`. The harness wants it even when `GOOGLE_GEMINI_BASE_URL` points at a
+mock, which ignores its value.
 
 **`RUN_ERROR: The model produced an invalid tool call`** — often a long
 workspace path rather than a model problem. Set `ANTIGRAVITY_WORKSPACE` to

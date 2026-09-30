@@ -11,13 +11,12 @@ echo "========================================="
 # instead of sitting in a userspace buffer until the process is gone.
 export PYTHONUNBUFFERED=1
 
-# Fail fast rather than warn: every model call goes through the in-process
-# OpenAI-compatible shim, which is the only thing that can attach the
-# Authorization header (the Go harness has no API-key field). Without the key
-# the shim raises and the agent dies during import, so there is no
-# warn-and-continue mode worth offering.
-if [ -z "$OPENAI_API_KEY" ]; then
-  echo "[entrypoint] FATAL: OPENAI_API_KEY is not set — the OpenAI shim cannot start, so the agent dies at import. Refusing to start." >&2
+# Fail fast rather than warn: every model call goes to Gemini, and the Go
+# harness will not create a conversation without GEMINI_API_KEY — even when
+# GOOGLE_GEMINI_BASE_URL points it at a mock. Without the key the agent starts
+# and answers /health, but every chat turn fails.
+if [ -z "$GEMINI_API_KEY" ]; then
+  echo "[entrypoint] FATAL: GEMINI_API_KEY is not set, so every model call would fail. Refusing to start." >&2
   exit 1
 fi
 

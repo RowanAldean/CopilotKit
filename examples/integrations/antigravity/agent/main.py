@@ -12,28 +12,16 @@ Because the harness does real filesystem work, `workspaces=[...]` is not
 optional — it is the sandbox the harness is allowed to touch. Keep that path
 SHORT: a long, high-entropy path (a macOS temp dir is ~75 characters) makes the
 model reproduce it wrongly inside tool calls, and the harness treats the bad
-path as a fatal error. Measured on gpt-4.1-mini: 0/14 runs failed with a
+path as a fatal error. Measured: 0/14 runs failed with a
 9-character workspace, 2/14 with a 75-character one.
 
-WHY THE SHIM (AND WHY OPENAI_API_KEY IS REQUIRED)
--------------------------------------------------
-This starter talks to an OpenAI-compatible model, and `google-antigravity`
-0.1.9's OpenAI path (`GemmaEndpoint`) carries only a `base_url` — there is no
-API-key field, and the Go harness reads no `OPENAI_API_KEY`. That path was
-designed for unauthenticated local servers (Ollama, LM Studio). It also emits
-Gemini-flavoured tool schemas (proto-style `"STRING"` type names) that OpenAI
-rejects.
-
-`src/openai_proxy.py` is a tiny in-process shim that fixes both: it attaches
-`Authorization: Bearer $OPENAI_API_KEY` and rewrites those schemas, then
-forwards to `OPENAI_BASE_URL`. So `OPENAI_API_KEY` is required — the shim
-refuses to start without it and this process exits at import. Nothing in
-Python can attach that header to the model call directly, because Python does
-not make the model call.
-
-To use Gemini instead, drop the shim entirely: pass
-`api_key=os.environ["GEMINI_API_KEY"]` and NO `base_url` to AntigravityAgent
-(the native path needs neither the header nor the schema rewrite).
+THE MODEL
+---------
+The harness talks to Gemini on the SDK's native path, so the only credential is
+`GEMINI_API_KEY` — the one name the SDK reads. To send the same Gemini requests
+to another Gemini-compatible server (a gateway, or aimock for tests), set
+`GOOGLE_GEMINI_BASE_URL`: the agent then passes a `GeminiAPIEndpoint` to the
+adapter. The harness still insists on a key there, though a mock ignores it.
 """
 
 from __future__ import annotations
@@ -49,11 +37,10 @@ load_dotenv()
 
 from ag_ui_antigravity import AntigravityAgent, create_antigravity_app  # noqa: E402
 from google.antigravity import CapabilitiesConfig  # noqa: E402
-from google.antigravity.types import BuiltinTools  # noqa: E402
+from google.antigravity.models import DEFAULT_MODEL  # noqa: E402
+from google.antigravity.types import BuiltinTools, GeminiAPIEndpoint  # noqa: E402
 
-from src.openai_proxy import start_background  # noqa: E402
-
-MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gpt-4.1-mini")
+MODEL = os.environ.get("ANTIGRAVITY_MODEL", DEFAULT_MODEL)
 
 
 def _pick_short_dir(env_var: str, container_default: str, name: str) -> str:
@@ -102,25 +89,10 @@ WORKSPACE = _pick_short_dir("ANTIGRAVITY_WORKSPACE", "/data/ws", "agws")
 SAVE_DIR = _pick_short_dir("ANTIGRAVITY_SAVE_DIR", "/data/sessions", "agsess")
 
 
-def _upstream() -> str:
-    """The OpenAI-compatible ROOT the shim forwards to.
-
-    `OPENAI_BASE_URL` follows the OpenAI SDK convention and ends in `/v1`, but
-    the harness appends `/v1/chat/completions` itself — so the shim's upstream
-    (and the `base_url` handed to the SDK) must be the root without it.
-    """
-    base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
-    return base[: -len("/v1")] if base.endswith("/v1") else base
-
-
-# Start the shim once, at import, and hand the SDK its local URL. Starting it
-# here (rather than per run) means a bad port or a missing OPENAI_API_KEY fails
-# loudly now instead of on the first chat turn.
-BASE_URL = start_background(
-    port=int(os.environ.get("ANTIGRAVITY_SHIM_PORT", "8931")),
-    upstream=_upstream(),
-    extra_headers=None,
-)
+def _endpoint() -> GeminiAPIEndpoint | None:
+    """A Gemini-compatible server to call instead of Google's API, if any."""
+    base_url = os.environ.get("GOOGLE_GEMINI_BASE_URL", "").rstrip("/")
+    return GeminiAPIEndpoint(base_url=base_url) if base_url else None
 
 
 # --- Server-side tool -------------------------------------------------------
@@ -168,7 +140,9 @@ commands or edit files for you."""
 
 agent = AntigravityAgent(
     model=MODEL,
-    base_url=BASE_URL,
+    # The key comes from GEMINI_API_KEY, which the SDK and the harness read
+    # from the environment themselves.
+    endpoint=_endpoint(),
     system_instructions=SYSTEM_INSTRUCTIONS,
     tools=[get_weather],
     # Not optional: the harness does real file and shell work, and this is the
@@ -200,9 +174,9 @@ if __name__ == "__main__":
     import uvicorn
 
     print(f"[agent] model={MODEL} workspace={WORKSPACE} save_dir={SAVE_DIR}")
-    print(f"[agent] OpenAI shim listening on {BASE_URL} -> {_upstream()}")
+    endpoint = _endpoint()
+    print(f"[agent] Gemini endpoint: {endpoint.base_url if endpoint else 'Google'}")
     # Pass the app OBJECT, not "main:app": the import-string form makes uvicorn
     # import this module a second time (as `main`, while it is already running
-    # as `__main__`), re-running the whole body — including the shim's port
-    # probe, which then raises because the shim is already bound.
+    # as `__main__`) and builds the agent twice.
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")))
