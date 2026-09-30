@@ -5,7 +5,7 @@
 - Demo is deployed and accessible
 - Agent backend is healthy (check /api/health)
 - The agent server mounts `open_gen_ui_agent()` (`src/agents/open_gen_ui.py`) at `/open_gen_ui`; the OGUI runtime (`src/app/api/copilotkit-ogui/route.ts`) maps agent name `open-gen-ui` to it with `openGenerativeUI.agents` including `"open-gen-ui"`
-- `OPENAI_API_KEY` is set (the Go harness calls the model through the shim in `src/openai_proxy.py`)
+- `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests)
 - Expect plainer styling than langgraph-python: the page's design skill arrives as agent context, which this adapter does not pass to the model
 
 ## Test Steps

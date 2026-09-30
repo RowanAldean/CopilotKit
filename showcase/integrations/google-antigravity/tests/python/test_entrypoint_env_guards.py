@@ -1,8 +1,9 @@
-"""entrypoint.sh refuses to start without OPENAI_API_KEY.
+"""entrypoint.sh refuses to start without a Gemini API key.
 
-Every model call goes through the OpenAI shim, which cannot start without the
-key, so the agent would die at import. The guard must exit before launching
-any process; with the key set the script must get past it.
+The Go harness will not create a conversation without one, even against
+aimock, so without it the server comes up healthy and every run fails. The
+guard must exit before launching any process; with a key set the script must
+get past it.
 """
 
 from __future__ import annotations
@@ -10,6 +11,8 @@ from __future__ import annotations
 import os
 import subprocess
 from pathlib import Path
+
+import pytest
 
 _ENTRYPOINT = Path(__file__).resolve().parents[2] / "entrypoint.sh"
 
@@ -36,14 +39,21 @@ def _run(env, tmp_path):
     )
 
 
-def test_missing_key_is_fatal_before_anything_starts(tmp_path):
+def test_missing_credentials_are_fatal_before_anything_starts(tmp_path):
     result = _run({}, tmp_path)
     assert result.returncode == 1
-    assert "FATAL: OPENAI_API_KEY not set" in result.stderr
+    assert "FATAL: set GEMINI_API_KEY" in result.stderr
     assert "Starting Python agent" not in result.stdout
 
 
-def test_a_key_gets_past_the_guard(tmp_path):
-    result = _run({"OPENAI_API_KEY": "sk-test"}, tmp_path)
-    assert "FATAL: OPENAI_API_KEY" not in result.stderr
+def test_a_base_url_alone_is_not_enough(tmp_path):
+    result = _run({"GOOGLE_GEMINI_BASE_URL": "http://aimock:4010"}, tmp_path)
+    assert result.returncode == 1
+    assert "FATAL: set GEMINI_API_KEY" in result.stderr
+
+
+@pytest.mark.parametrize("env", [{"GEMINI_API_KEY": "k"}, {"GOOGLE_API_KEY": "k"}])
+def test_a_key_gets_past_the_guard(tmp_path, env):
+    result = _run(env, tmp_path)
+    assert "FATAL" not in result.stderr
     assert "Starting Python agent" in result.stdout

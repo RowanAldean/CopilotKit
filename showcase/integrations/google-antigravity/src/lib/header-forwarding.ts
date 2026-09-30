@@ -3,8 +3,8 @@
  *
  * The google-antigravity Next.js runtime fronts a separate Python
  * agent_server whose AntigravityAgent instances run a Go harness subprocess
- * that makes the actual model call through an in-process OpenAI-compatible
- * shim. To make `x-aimock-context` (and any other `x-*` request-scope
+ * that makes the actual Gemini model call itself. To make `x-aimock-context`
+ * (and any other `x-*` request-scope
  * headers) reach aimock, we have to convey the headers across hops:
  *
  *   1. Browser  →  Next.js /api/copilotkit*  (extraHTTPHeaders in Playwright)

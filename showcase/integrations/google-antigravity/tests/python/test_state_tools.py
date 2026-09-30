@@ -29,8 +29,8 @@ def _snapshots(events):
     return [e.snapshot for e in events if _types([e]) == ["STATE_SNAPSHOT"]]
 
 
-class _FakeCompletions:
-    """Stands in for the shim: answers every chat completion with `content`."""
+class _FakeGemini:
+    """Stands in for aimock: answers every generateContent call with `content`."""
 
     def __init__(self, content="", status=200):
         self.content = content
@@ -41,16 +41,29 @@ class _FakeCompletions:
         self.requests.append({"url": url, "json": json, "headers": headers})
         return httpx.Response(
             self.status,
-            json={"choices": [{"message": {"content": self.content}}]},
+            json={
+                "candidates": [
+                    {
+                        "content": {
+                            "role": "model",
+                            "parts": [
+                                {"text": "thinking it over", "thought": True},
+                                {"text": self.content},
+                            ],
+                        }
+                    }
+                ]
+            },
             request=httpx.Request("POST", url),
         )
 
 
 @pytest.fixture
 def completions(monkeypatch):
-    fake = _FakeCompletions("- fact one\n- fact two")
+    fake = _FakeGemini("- fact one\n- fact two")
     monkeypatch.setattr(subagents, "_http_client", lambda: fake)
-    monkeypatch.setattr(subagents, "base_url", lambda: "http://shim.test")
+    monkeypatch.setattr(subagents, "gemini_base_url", lambda: "http://aimock.test")
+    monkeypatch.setattr(subagents, "api_key", lambda: "fake-gemini-key")
     return fake
 
 
@@ -125,16 +138,38 @@ class TestSubagentDelegations:
         result = [e for e in events if _types([e]) == ["TOOL_CALL_RESULT"]][0]
         assert "There was an error executing research_agent" in result.content
 
-    async def test_the_call_goes_through_the_shim_with_the_aimock_context(
+    async def test_the_call_is_a_gemini_request_with_the_aimock_context(
         self, completions
     ):
         bridge = UIBridge()
         (research,) = bridge.build_server_tools([subagents.research_agent])
         await research(task="topic")
         (request,) = completions.requests
-        assert request["url"] == "http://shim.test/v1/chat/completions"
-        assert request["headers"] == {"X-AIMock-Context": "google-antigravity"}
-        assert request["json"]["messages"][1] == {"role": "user", "content": "topic"}
+        assert request["url"] == (
+            f"http://aimock.test/v1beta/models/{subagents.MODEL}:generateContent"
+        )
+        assert request["headers"] == {
+            "X-AIMock-Context": "google-antigravity",
+            "x-goog-api-key": "fake-gemini-key",
+        }
+        assert request["json"]["contents"] == [
+            {"role": "user", "parts": [{"text": "topic"}]}
+        ]
+        assert request["json"]["systemInstruction"] == {
+            "parts": [{"text": subagents._ROLE_PROMPTS["research_agent"]}]
+        }
+
+    async def test_without_a_base_url_the_call_goes_to_google(
+        self, completions, monkeypatch
+    ):
+        monkeypatch.setattr(subagents, "gemini_base_url", lambda: None)
+        bridge = UIBridge()
+        (research,) = bridge.build_server_tools([subagents.research_agent])
+        await research(task="topic")
+        (request,) = completions.requests
+        assert request["url"].startswith(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+        )
 
 
 @pytest.mark.asyncio

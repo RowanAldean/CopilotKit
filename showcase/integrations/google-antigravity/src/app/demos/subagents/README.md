@@ -11,8 +11,8 @@ same way the SDK's built-in `ask_question` tool is disabled: both would open
 an interrupt this showcase doesn't know how to drive.
 
 - **Three role tools**: each is an `async def` that makes one additional
-  chat-completion call through the OpenAI-compatible shim
-  (`src/openai_proxy.py`) using its own role-specific prompt, and returns the
+  Gemini `generateContent` call with its own role-specific prompt, against the
+  same endpoint as the harness (aimock under compose), and returns the
   resulting prose.
 - **Per-tool cards**: `useRenderTool` renders a `SubAgentActivityCard` for
   each of the three tool names as the supervisor calls them.

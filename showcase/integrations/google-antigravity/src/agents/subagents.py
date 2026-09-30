@@ -22,7 +22,7 @@ import uuid
 import httpx
 from ag_ui_antigravity import get_state, set_state
 
-from agents._common import MODEL, SLUG, base_url
+from agents._common import MODEL, SLUG, api_key, gemini_base_url
 
 SUPERVISOR_PROMPT = (
     "You are a supervisor. For research tasks call `research_agent`, for "
@@ -60,19 +60,26 @@ async def close_http_client() -> None:
 
 
 async def _run(role: str, task: str) -> str:
+    base = gemini_base_url() or "https://generativelanguage.googleapis.com"
+    headers = {"X-AIMock-Context": SLUG}
+    key = api_key()
+    if key:
+        headers["x-goog-api-key"] = key
     response = await _http_client().post(
-        f"{base_url()}/v1/chat/completions",
+        f"{base}/v1beta/models/{MODEL}:generateContent",
         json={
-            "model": MODEL,
-            "messages": [
-                {"role": "system", "content": _ROLE_PROMPTS[role]},
-                {"role": "user", "content": task},
-            ],
+            "systemInstruction": {"parts": [{"text": _ROLE_PROMPTS[role]}]},
+            "contents": [{"role": "user", "parts": [{"text": task}]}],
         },
-        headers={"X-AIMock-Context": SLUG},
+        headers=headers,
     )
     response.raise_for_status()
-    content = response.json()["choices"][0]["message"].get("content") or ""
+    candidates = response.json().get("candidates") or [{}]
+    parts = (candidates[0].get("content") or {}).get("parts") or []
+    # Thinking models return their thought summary as parts flagged `thought`.
+    content = "".join(
+        part.get("text", "") for part in parts if not part.get("thought")
+    )
     result = content.strip() or SUB_AGENT_EMPTY_SENTINEL
     _record_delegation(role, task, result)
     return result

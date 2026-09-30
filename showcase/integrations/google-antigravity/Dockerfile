@@ -61,7 +61,7 @@ COPY --chown=app:app --from=frontend /app/package.json ./
 COPY --chown=app:app --from=frontend /app/public ./public
 
 # Agent code
-COPY --chown=app:app src/agent_server.py src/openai_proxy.py ./
+COPY --chown=app:app src/agent_server.py ./
 COPY --chown=app:app src/agents/ ./agents/
 
 # Manifest is read from `process.cwd()` by BOTH `src/app/page.tsx` (the demo

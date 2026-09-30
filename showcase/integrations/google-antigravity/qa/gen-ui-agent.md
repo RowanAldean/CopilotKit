@@ -4,7 +4,7 @@
 
 - Demo is deployed and accessible
 - Agent backend is healthy (check /api/health); the agent server mounts `gen_ui_agent()` (`src/agents/gen_ui_agent.py`) at `/gen-ui-agent`, whose `set_steps` server tool writes `steps` with `set_state()`
-- `OPENAI_API_KEY` is set (the Go harness calls the model through the shim in `src/openai_proxy.py`)
+- `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests)
 
 ## Test Steps
 

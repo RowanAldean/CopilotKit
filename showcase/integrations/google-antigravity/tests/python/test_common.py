@@ -7,26 +7,40 @@ import pytest
 from agents import _common
 
 
-@pytest.mark.parametrize(
-    ("base", "expected"),
-    [
-        # Compose sets the OpenAI SDK convention (`.../v1`); the harness
-        # appends `/v1/chat/completions` itself, so the shim needs the root.
-        ("http://aimock:4010/v1", "http://aimock:4010"),
-        ("http://aimock:4010/v1/", "http://aimock:4010"),
-        ("https://api.openai.com/v1", "https://api.openai.com"),
-        ("http://proxy.local", "http://proxy.local"),
-        ("http://proxy.local/", "http://proxy.local"),
-    ],
-)
-def test_upstream_is_the_root_the_harness_appends_to(monkeypatch, base, expected):
-    monkeypatch.setenv("OPENAI_BASE_URL", base)
-    assert _common._upstream() == expected
+@pytest.fixture
+def clean_env(monkeypatch):
+    for name in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GEMINI_BASE_URL"):
+        monkeypatch.delenv(name, raising=False)
+    return monkeypatch
 
 
-def test_upstream_defaults_to_openai(monkeypatch):
-    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
-    assert _common._upstream() == "https://api.openai.com"
+def test_gemini_api_key_wins_over_google_api_key(clean_env):
+    clean_env.setenv("GEMINI_API_KEY", "gemini")
+    clean_env.setenv("GOOGLE_API_KEY", "google")
+    assert _common.api_key() == "gemini"
+
+
+def test_google_api_key_is_the_fallback(clean_env):
+    # The fleet exports GOOGLE_API_KEY; the Antigravity SDK only reads GEMINI_API_KEY.
+    clean_env.setenv("GOOGLE_API_KEY", "google")
+    assert _common.api_key() == "google"
+
+
+def test_no_base_url_means_google_api(clean_env):
+    assert _common.gemini_base_url() is None
+    assert _common.endpoint() is None
+
+
+@pytest.mark.parametrize("base", ["http://aimock:4010", "http://aimock:4010/"])
+def test_base_url_builds_an_aimock_endpoint(clean_env, base):
+    clean_env.setenv("GOOGLE_GEMINI_BASE_URL", base)
+    clean_env.setenv("GOOGLE_API_KEY", "fake-gemini-key")
+    endpoint = _common.endpoint()
+    assert endpoint.base_url == "http://aimock:4010"
+    assert endpoint.api_key == "fake-gemini-key"
+    # The harness makes the model calls, so the fixture selector must ride
+    # on the endpoint.
+    assert endpoint.http_headers == {"X-AIMock-Context": "google-antigravity"}
 
 
 def test_only_finish_is_enabled():

@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/a2ui-fixed-schema` on the dashboard host
-- Agent backend is healthy (`/api/health`; the agent server answers `GET /health` with its agent list, which includes `a2ui_fixed_schema`); `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`; `OPENAI_BASE_URL` sets the upstream, aimock in tests); `AGENT_URL` points at the Antigravity agent server (`src/agent_server.py`), which mounts `a2ui_fixed_agent()` from `src/agents/a2ui_fixed.py` at `/a2ui_fixed_schema` (registered as agent name `a2ui-fixed-schema` — see `src/app/api/copilotkit-a2ui-fixed-schema/route.ts`, which sets `a2ui.injectA2UITool: false` because the backend `display_flight` server tool emits its own `a2ui_operations` container)
+- Agent backend is healthy (`/api/health`; the agent server answers `GET /health` with its agent list, which includes `a2ui_fixed_schema`); `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set on Railway (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests); `AGENT_URL` points at the Antigravity agent server (`src/agent_server.py`), which mounts `a2ui_fixed_agent()` from `src/agents/a2ui_fixed.py` at `/a2ui_fixed_schema` (registered as agent name `a2ui-fixed-schema` — see `src/app/api/copilotkit-a2ui-fixed-schema/route.ts`, which sets `a2ui.injectA2UITool: false` because the backend `display_flight` server tool emits its own `a2ui_operations` container)
 - Note: the demo source contains no `data-testid` attributes. Checks below rely on verbatim visible text, DOM structure, and the JSON schema at `src/agents/a2ui_schemas/flight_schema.json`
 
 ## Test Steps

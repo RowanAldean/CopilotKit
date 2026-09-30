@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/mcp-apps` on the dashboard host
-- Agent backend is healthy; `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); `AGENT_URL` points at the Antigravity agent server (`src/agent_server.py`), which mounts `mcp_apps_agent()` from `src/agents/mcp_apps.py` at `/mcp-apps` (registered as agent name `mcp-apps` — see `src/app/api/copilotkit-mcp-apps/route.ts`)
+- Agent backend is healthy; `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set on Railway (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests); `AGENT_URL` points at the Antigravity agent server (`src/agent_server.py`), which mounts `mcp_apps_agent()` from `src/agents/mcp_apps.py` at `/mcp-apps` (registered as agent name `mcp-apps` — see `src/app/api/copilotkit-mcp-apps/route.ts`)
 - MCP server target: the public Excalidraw MCP app at `https://mcp.excalidraw.com` (override via `MCP_SERVER_URL`). Pinned `serverId: "excalidraw"` so URL changes don't silently break persisted activities
 - Note: the demo source contains no `data-testid` attributes and registers no custom activity renderer — CopilotKit's built-in `MCPAppsActivityRenderer` handles the sandboxed iframe automatically. Checks below rely on verbatim visible text, network traffic, and the iframe DOM
 

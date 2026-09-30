@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/chat-slots` on the dashboard host
-- Agent backend is healthy (`/api/health` or `/api/copilotkit` GET); `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); the agent server (`src/agent_server.py`) mounts `chat-slots` at `/chat-slots`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py`
+- Agent backend is healthy (`/api/health` or `/api/copilotkit` GET); `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set on Railway (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests); the agent server (`src/agent_server.py`) mounts `chat-slots` at `/chat-slots`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py`
 - Note: this demo DOES include `data-testid` attributes on every custom slot. Use them as the primary selectors. The underlying agent is the neutral "helpful, concise assistant" (no frontend tools, no agent tools) — this demo exercises frontend slot customization only.
 
 ## Test Steps

@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/hitl-in-app` on the dashboard host
-- Agent backend is healthy (`/api/health`); `OPENAI_API_KEY` is set (or `OPENAI_BASE_URL` points at the aimock proxy; the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); the agent server mounts `hitl_in_app_agent()` from `src/agents/hitl.py` at `/hitl-in-app`
+- Agent backend is healthy (`/api/health`); `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests); the agent server mounts `hitl_in_app_agent()` from `src/agents/hitl.py` at `/hitl-in-app`
 - Note: Unlike the in-chat HITL demo, the approval UI here is an app-level modal portal'd to `document.body` and is NOT a child of the chat transcript.
 
 ## Test Steps

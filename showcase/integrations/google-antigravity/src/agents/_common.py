@@ -9,9 +9,8 @@ from __future__ import annotations
 import os
 
 from google.antigravity import CapabilitiesConfig
-from google.antigravity.types import BuiltinTools
-
-from openai_proxy import start_background
+from google.antigravity.models import DEFAULT_MODEL
+from google.antigravity.types import BuiltinTools, GeminiAPIEndpoint
 
 SLUG = "google-antigravity"
 
@@ -21,7 +20,7 @@ SLUG = "google-antigravity"
 WORKSPACE = os.environ.get("ANTIGRAVITY_WORKSPACE", "/data/ws")
 SAVE_DIR = os.environ.get("ANTIGRAVITY_SAVE_DIR", "/data/sessions")
 
-MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gpt-4.1-mini")
+MODEL = os.environ.get("ANTIGRAVITY_MODEL", DEFAULT_MODEL)
 
 # Session budget. The adapter defaults (50 live sessions per agent instance,
 # reclaimed after 30 min idle) fit a chat product, not a probe fleet: every E2E
@@ -34,36 +33,46 @@ SESSION_TIMEOUT_SECONDS = int(
     os.environ.get("ANTIGRAVITY_SESSION_TIMEOUT_SECONDS", "300")
 )
 MAX_SESSIONS = int(os.environ.get("ANTIGRAVITY_MAX_SESSIONS", "200"))
-REASONING_MODEL = os.environ.get("ANTIGRAVITY_REASONING_MODEL", "gpt-5-mini")
-
-
-def _upstream() -> str:
-    """The OpenAI-compatible root the shim forwards to.
-
-    ``OPENAI_BASE_URL`` follows the OpenAI SDK convention and ends in ``/v1``
-    (compose sets ``http://aimock:4010/v1``). The harness appends
-    ``/v1/chat/completions`` itself, so the shim's upstream is the root.
-    """
-    base = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
-    return base[: -len("/v1")] if base.endswith("/v1") else base
-
-
-_BASE_URL: str | None = None
-
-
-def base_url() -> str:
-    """Starts the shim once and returns the base_url every agent uses."""
-    global _BASE_URL
-    if _BASE_URL is None:
-        _BASE_URL = start_background(
-            port=int(os.environ.get("ANTIGRAVITY_SHIM_PORT", "8931")),
-            upstream=_upstream(),
-            extra_headers={"X-AIMock-Context": SLUG},
-        )
-    return _BASE_URL
+REASONING_MODEL = os.environ.get("ANTIGRAVITY_REASONING_MODEL", DEFAULT_MODEL)
 
 
 # @region[agent-setup]
+def api_key() -> str | None:
+    """The Gemini API key.
+
+    ``GEMINI_API_KEY`` is the only name the Antigravity SDK reads. The showcase
+    fleet exports ``GOOGLE_API_KEY`` for its Gemini integrations, so accept
+    that too rather than fail on the first model call.
+    """
+    return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+
+
+def gemini_base_url() -> str | None:
+    """The Gemini-compatible server to call instead of Google's API.
+
+    Showcase compose sets ``GOOGLE_GEMINI_BASE_URL=http://aimock:4010``, the
+    same variable the google-adk integration reads.
+    """
+    return os.environ.get("GOOGLE_GEMINI_BASE_URL", "").rstrip("/") or None
+
+
+def endpoint() -> GeminiAPIEndpoint | None:
+    """Where every model call goes: aimock under compose, Google's API otherwise.
+
+    Against aimock, the ``X-AIMock-Context`` header selects this package's
+    fixtures. The harness makes the model calls itself, so the header has to
+    ride on the endpoint rather than on a request this code sends.
+    """
+    base_url = gemini_base_url()
+    if base_url is None:
+        return None
+    return GeminiAPIEndpoint(
+        base_url=base_url,
+        api_key=api_key(),
+        http_headers={"X-AIMock-Context": SLUG},
+    )
+
+
 def chat_only_capabilities() -> CapabilitiesConfig:
     """Only ``finish`` stays enabled.
 
@@ -117,7 +126,8 @@ def build(**kwargs):
 
     defaults = dict(
         model=MODEL,
-        base_url=base_url(),
+        api_key=api_key(),
+        endpoint=endpoint(),
         workspaces=[WORKSPACE],
         save_dir=SAVE_DIR,
         harness_pool=shared_pool(),

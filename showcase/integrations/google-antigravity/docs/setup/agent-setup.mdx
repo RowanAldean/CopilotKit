@@ -1,7 +1,9 @@
 An Antigravity agent is an `AntigravityAgent` from `ag_ui_antigravity`. You give
-it a model, the OpenAI-compatible root URL the harness should call (the root, not
-`.../v1` — the harness appends `/v1/chat/completions` itself), the `workspaces`
-it may touch on disk, and a `save_dir` for its conversation trajectories.
+it a Gemini model and its API key, the `workspaces` it may touch on disk, and a
+`save_dir` for its conversation trajectories. To send the model calls somewhere
+other than Google's API, pass an `endpoint`: the SDK's
+`GeminiAPIEndpoint(base_url=..., http_headers=...)`. The showcase does that to
+replay aimock fixtures, and the headers ride on every call the harness makes.
 Antigravity is session-based rather than a stateless graph — the SDK drives a
 bundled Go `localharness` subprocess — so the session knobs belong here too.
 
@@ -37,7 +39,7 @@ Runtime at `http://localhost:8000/<agent name>`.
     Until then, install it from the AG-UI repo:
 
     ```bash
-    pip install "git+https://github.com/ag-ui-protocol/ag-ui@50177146f18d133cc4dd178874587c8fdc74e703#subdirectory=integrations/antigravity/python" google-antigravity
+    pip install "git+https://github.com/ag-ui-protocol/ag-ui@61e11031ba4b70ddcb1ba3a2756a906b4349b9ac#subdirectory=integrations/antigravity/python" google-antigravity
     ```
 
     `google-antigravity` ships platform wheels that bundle the `localharness`

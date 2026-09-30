@@ -92,8 +92,7 @@ def main():
     # Pass the app OBJECT, not "agent_server:app": the import-string form makes
     # uvicorn import this module a second time under the name ``agent_server``
     # while it is already running as ``__main__``, which re-runs the whole
-    # module body — including openai_proxy's port probe, which then raises
-    # because the shim is already bound.
+    # module body and builds every agent a second time.
     uvicorn.run(app, host="0.0.0.0", port=port)
 
 

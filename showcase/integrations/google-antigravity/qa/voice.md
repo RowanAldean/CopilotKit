@@ -5,7 +5,7 @@
 - Demo is deployed and accessible at `/demos/voice`
 - Railway service `showcase-google-antigravity` is healthy (`/api/health` returns 200)
 - `OPENAI_API_KEY` is set on the Railway service for the dedicated voice runtime at `/api/copilotkit-voice` (required for the `/transcribe` endpoint)
-- The agent server (`src/agent_server.py`) is healthy (`GET /health` lists `voice`); `OPENAI_API_KEY` is set there for the model call (the Go harness calls the model through the in-process OpenAI-compatible shim in `src/openai_proxy.py`; `OPENAI_BASE_URL` sets the upstream, aimock in tests). The runtime's `voice-demo` agent maps to `${AGENT_URL}/voice`, which `src/agents/registry.py` binds to the shared `neutral_agent()` from `src/agents/chat.py`
+- The agent server (`src/agent_server.py`) is healthy (`GET /health` lists `voice`); `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set there for the model call (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests). The runtime's `voice-demo` agent maps to `${AGENT_URL}/voice`, which `src/agents/registry.py` binds to the shared `neutral_agent()` from `src/agents/chat.py`
 - A modern browser that supports `MediaRecorder` (Chromium, Firefox, Safari 14+)
 - Microphone hardware available (required only for the mic path in section 3)
 - A bundled `public/demo-audio/sample.wav` is present (used for screenshot/preview generation; the in-app sample button no longer fetches it)

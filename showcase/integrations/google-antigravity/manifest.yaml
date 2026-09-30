@@ -56,9 +56,10 @@ not_supported_features:
   - shared-state-read
   - readonly-state-agent-context
   - agent-config
-  # Server tools can write state (set_state), but the model cannot read it:
-  # read-write needs the model to see the UI's preferences, and streaming
-  # needs tool arguments streamed token by token, which the harness does not do.
+  # Server tools can read and write state (get_state/set_state), but the model
+  # only sees state through a tool: read-write needs the UI's preferences in
+  # the prompt, and streaming needs tool arguments streamed token by token,
+  # which the harness does not do.
   - shared-state-read-write
   - shared-state-streaming
   # Non-text message parts are dropped by the adapter.
@@ -67,12 +68,11 @@ not_supported_features:
   # declares these too.
   - gen-ui-interrupt
   - interrupt-headless
-  # The Go harness drops the model's reasoning deltas: an aimock response
-  # carrying `reasoning_content` streams back as plain answer text and the
-  # adapter never sees a THINKING step, so no reasoning message renders.
+  # The native Gemini path surfaces reasoning (see PARITY_NOTES.md
+  # "Reasoning"), but this package has no reasoning fixtures yet, so these
+  # three cells are not probed.
   - reasoning-default
   - reasoning-custom
-  # Same root cause: this cell asserts one reasoning-block mount per turn.
   - tool-rendering-reasoning-chain
   # No standalone cell for these yet (a2ui-fixed-schema has one). See
   # PARITY_NOTES.md "Not supported" and "Beautiful Chat surfaces".

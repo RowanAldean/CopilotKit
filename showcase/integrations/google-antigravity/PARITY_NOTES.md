@@ -36,20 +36,18 @@ Python process only builds the per-turn AG-UI events around it.
 
 ## LLM path
 
-The Antigravity SDK has two gaps for a showcase built on aimock: no API-key
-field for a custom OpenAI-compatible endpoint, and Gemini-shaped tool
-schemas by default. Both are worked around with an in-process OpenAI-compatible
-shim (`src/openai_proxy.py`, adapted from the AG-UI branch's
-`examples/server/openai_proxy.py`) that sits between the Go harness and
-aimock, injects the `Authorization` header the SDK's OpenAI path cannot send,
-and normalizes tool schemas.
+Every model call goes to Gemini over the SDK's native path. Showcase compose
+sets `GOOGLE_GEMINI_BASE_URL=http://aimock:4010` for the whole fleet, and
+`agents/_common.py` turns it into the adapter's `endpoint=`: a
+`GeminiAPIEndpoint` pointed at aimock. With no base URL set, the same code
+calls Google's API with `GEMINI_API_KEY` (or the fleet's `GOOGLE_API_KEY`).
 
-The shim also stamps a **static** `X-AIMock-Context: google-antigravity`
-header on every outbound call, because the harness — not this Python process —
-makes the model call. Python's usual per-request `ContextVar` header-forwarding
-hook (`_header_forwarding.py`, copied from google-adk for CVDIAG parity) can
-attach headers to the _agent_ hop, but those headers cannot cross into the Go
-subprocess's own HTTP call to the shim. Concretely this means:
+The endpoint also carries a **static** `X-AIMock-Context: google-antigravity`
+header, because the harness — not this Python process — makes the model call.
+Python's usual per-request `ContextVar` header-forwarding hook
+(`_header_forwarding.py`, copied from google-adk for CVDIAG parity) can attach
+headers to the _agent_ hop, but those headers cannot cross into the Go
+subprocess's own HTTP call to aimock. Concretely this means:
 
 - Per-request `X-AIMock-Strict` and `x-test-id` headers stop at the agent hop
   and never reach the LLM hop. A fixture miss on the LLM hop therefore proxies
@@ -60,6 +58,11 @@ subprocess's own HTTP call to the shim. Concretely this means:
 
 This is a deliberate, documented trade-off rather than an oversight; revisit
 if cells start flapping because of it.
+
+Until 2026-09-30 the package ran on the SDK's OpenAI-compatible path behind an
+in-process shim that added the API key and lowercased Gemini-shaped tool
+schemas. The native path needs neither, so the shim is gone. aimock stages
+turns identically on both paths, so the fixtures did not change.
 
 ## Tool execution
 
@@ -92,8 +95,8 @@ answer.
 via `enable_subagents=False`, for the same reason `ask_question` is disabled —
 avoiding an interrupt this showcase cannot drive). Instead, `research_agent`,
 `writing_agent`, and `critique_agent` are implemented as ordinary server-side
-tools that each make one additional chat-completion call through the shim and
-return prose. The per-tool cards render from the resulting `TOOL_CALL_*`
+tools that each make one additional Gemini `generateContent` call, against
+the same endpoint as the harness, and return prose. The per-tool cards render from the resulting `TOOL_CALL_*`
 events, and each tool also appends a `delegations` entry to shared state with
 the adapter's `get_state()` / `set_state()` (added to #2277 for this). The
 adapter streams a `STATE_SNAPSHOT` as each tool finishes, so the reference's
@@ -102,32 +105,26 @@ langgraph-python.
 
 ## Reasoning
 
-**Measured: not surfaced.** The adapter itself is ready for it — the event
-translator maps Antigravity's `StepType.THINKING` / `thinking_delta` onto
-AG-UI `THINKING_*` events — but the Go harness never produces such a step
-from an OpenAI-compatible response. Driving `/reasoning-default` directly
-against a fixture whose response carries a `reasoning` field (so aimock
-streams `reasoning_content` alongside `content`) yields exactly:
+**Measured on the native Gemini path: surfaced, but not yet probed.** Until
+2026-09-30 the package ran on the SDK's OpenAI-compatible path, where the Go
+harness dropped `reasoning_content` and a reasoning fixture produced only
+answer text (`RUN_STARTED, TEXT_MESSAGE_START, TEXT_MESSAGE_CONTENT x36,
+TEXT_MESSAGE_END, RUN_FINISHED`). On the native path aimock replays a
+fixture's `reasoning` field as Gemini thought parts, the harness turns them
+into `THINKING` steps, and the adapter emits AG-UI reasoning events. Driving
+the adapter at llamaindex's "sky appears blue" reasoning fixture yields:
 
 ```
-RUN_STARTED, TEXT_MESSAGE_START, TEXT_MESSAGE_CONTENT x36,
-TEXT_MESSAGE_END, RUN_FINISHED
+RUN_STARTED, REASONING_START, REASONING_MESSAGE_START,
+REASONING_MESSAGE_CONTENT x17, REASONING_MESSAGE_END, REASONING_END,
+TEXT_MESSAGE_START, TEXT_MESSAGE_CONTENT x16, TEXT_MESSAGE_END, RUN_FINISHED
 ```
 
-— the reasoning deltas are dropped and only the answer text arrives. The
-CopilotKit reasoning surfaces (`[data-testid="reasoning-block"]`, the
-built-in `Thinking… / Thought for…` label) therefore never mount, and the
-shared `d5-reasoning-display` probe fails with `no reasoning-role message
-rendered`. `tool-rendering-reasoning-chain` fails for the same reason: it
-asserts one additional `reasoning-block` mount per turn.
-
-Nothing in a fixture or a thin agent can change this, so
 `reasoning-default`, `reasoning-custom` and `tool-rendering-reasoning-chain`
-are declared in `not_supported_features`. Their pages, registry entries and
-runtime-route names are deliberately left in place (same treatment as
-`threadid-frontend-tool-roundtrip` below): the demos still load and answer,
-they just render the reasoning as ordinary assistant text. Revisit when the
-harness forwards `reasoning_content` as a thinking step.
+stay in `not_supported_features` until this package has reasoning fixtures of
+its own and the three cells pass against them. Their pages, registry entries
+and runtime-route names are deliberately left in place (same treatment as
+`threadid-frontend-tool-roundtrip` below).
 
 ## Not supported
 

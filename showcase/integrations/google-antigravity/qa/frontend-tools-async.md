@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/frontend-tools-async` on the dashboard host
-- Agent backend is healthy (`/api/copilotkit` GET returns `agent_status: "reachable"`); `OPENAI_API_KEY` is set (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); the agent server (`src/agent_server.py`) mounts the `frontend-tools-async` agent at `/frontend-tools-async`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py` (shared with the other frontend-only demos)
+- Agent backend is healthy (`/api/copilotkit` GET returns `agent_status: "reachable"`); `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests); the agent server (`src/agent_server.py`) mounts the `frontend-tools-async` agent at `/frontend-tools-async`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py` (shared with the other frontend-only demos)
 - Backend `neutral_agent()` registers NO server-side `query_notes` tool; the frontend registers exactly ONE tool via `useFrontendTool`: **`query_notes`** (parameter: `keyword: string`)
 - The async handler sleeps 500ms (simulated client-side DB latency) then filters an in-memory `NOTES_DB` of 7 hard-coded notes, returning up to 5 matches against `title`, `excerpt`, or `tags` (case-insensitive). The tool has a custom `render` that mounts `NotesCard`
 

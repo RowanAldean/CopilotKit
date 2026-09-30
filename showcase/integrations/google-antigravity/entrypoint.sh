@@ -19,21 +19,16 @@ echo "[entrypoint] PORT=${PORT:-not set}"
 echo "[entrypoint] NODE_ENV=${NODE_ENV:-not set}"
 echo "========================================="
 
-# Fail fast when OPENAI_API_KEY is missing. Every model call in this package
-# goes through the in-process OpenAI-compatible shim (src/openai_proxy.py),
-# which is the piece that attaches `Authorization: Bearer $OPENAI_API_KEY` —
-# the Go harness has no API-key field of its own. `openai_proxy.start_background`
-# raises `RuntimeError: OPENAI_API_KEY must be set to use the OpenAI shim.`,
-# and `agents._common.base_url()` calls it while `build_registry()` runs at
-# `import agent_server` time — so without the key the agent process dies during
-# import, before uvicorn ever binds :8000. There is no warn-and-continue mode to
-# offer: the frontend would come up but every demo page's runtime call and the
-# agent /health probe would fail, and the two-second liveness check below would
-# exit the container anyway. Better to say so here, with the reason, than to
-# print a warning and let it look like a mysterious import crash.
-# (compose supplies `sk-mock` for the aimock replay path.)
-if [ -z "${OPENAI_API_KEY:-}" ]; then
-    echo "[entrypoint] FATAL: OPENAI_API_KEY not set — the OpenAI shim cannot start, so the agent process dies at import. Refusing to start." >&2
+# Fail fast without a Gemini API key. Every model call goes to Gemini — Google's
+# API, or the Gemini-compatible server GOOGLE_GEMINI_BASE_URL names (compose
+# points it at aimock) — and the Go harness refuses to create a conversation
+# without a key either way, even though aimock ignores its value. GOOGLE_API_KEY
+# is accepted too (see agents._common.api_key); compose supplies a fake one.
+# Without a key the server starts and /health answers, but every demo's first
+# run fails with "a Gemini API key is required" — say so here instead of letting
+# the container look healthy.
+if [ -z "${GEMINI_API_KEY:-}" ] && [ -z "${GOOGLE_API_KEY:-}" ]; then
+    echo "[entrypoint] FATAL: set GEMINI_API_KEY (or GOOGLE_API_KEY). The Antigravity harness needs a key even against aimock. Refusing to start." >&2
     exit 1
 fi
 

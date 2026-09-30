@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Demo is deployed and accessible at `/demos/prebuilt-popup` on the dashboard host
-- Agent backend is healthy (`/api/health` or `/api/copilotkit` GET); `OPENAI_API_KEY` is set on Railway (the Go harness calls the model through the OpenAI-compatible shim in `src/openai_proxy.py`); the agent server (`src/agent_server.py`) mounts `prebuilt-popup` at `/prebuilt-popup`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py`
+- Agent backend is healthy (`/api/health` or `/api/copilotkit` GET); `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) is set on Railway (the Go harness calls Gemini itself; `GOOGLE_GEMINI_BASE_URL` points it at aimock in tests); the agent server (`src/agent_server.py`) mounts `prebuilt-popup` at `/prebuilt-popup`, bound in `src/agents/registry.py` to the shared `neutral_agent()` from `src/agents/chat.py`
 - Note: the demo source contains no `data-testid` attributes of its own. Checks below rely on verbatim visible text, role-based selectors, and CopilotKit's built-in popup testids (`copilot-popup`, `copilot-chat-toggle`, `copilot-close-button`, `copilot-suggestion`, `copilot-assistant-message`, `copilot-send-button`). The underlying agent is the neutral "helpful, concise assistant" (no frontend tools, no agent tools).
 
 ## Test Steps

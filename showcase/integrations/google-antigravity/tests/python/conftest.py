@@ -2,7 +2,7 @@
 
 ``agent_server.py`` runs with ``/app`` (the package root, where ``tools`` and
 ``_shared`` live) and the agent modules side by side, so ``agents.*``,
-``openai_proxy`` and ``tools.*`` all resolve the same way here.
+and ``tools.*`` resolve the same way here.
 """
 
 from __future__ import annotations
