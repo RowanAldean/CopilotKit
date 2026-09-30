@@ -25,19 +25,15 @@ Before you begin, you'll need the following:
 - Node.js 20+
 - Python 3.10+
 - `uv` for Python dependency management
-- An OpenAI API key **or** a Gemini API key
+- A Gemini API key, as `GEMINI_API_KEY`
 
-<Callout type="info" title="Why two kinds of key?">
-  `google-antigravity`'s Go harness talks to models two ways. Its **native**
-  path is Gemini, authenticated with `GEMINI_API_KEY`. Its **OpenAI-compatible**
-  path has no API-key field at all — it's built for unauthenticated local
-  servers like Ollama. Because the showcase starter points at an
-  OpenAI-compatible model, it runs a small in-process shim
-  (`src/openai_proxy.py`) that sits between the harness and the model
-  endpoint, attaches the `Authorization` header the harness can't send itself,
-  and normalizes Gemini-shaped tool schemas into ones OpenAI accepts. If you'd
-  rather talk to Gemini directly, skip the shim and pass `api_key=os.environ["GEMINI_API_KEY"]`
-  to `AntigravityAgent`, as shown in "Use an existing agent" below.
+<Callout type="info" title="Why GEMINI_API_KEY and not GOOGLE_API_KEY?">
+  `google-antigravity`'s Go harness calls Gemini itself, and `GEMINI_API_KEY`
+  is the only name it reads. A project that already has `GOOGLE_API_KEY`, as
+  ADK projects do, still fails on its first chat turn, because building the
+  agent needs no key. To send the same Gemini requests to another
+  Gemini-compatible server, such as a gateway, pass the adapter an `endpoint`
+  (`GeminiAPIEndpoint(base_url=...)`); the harness wants the key there too.
 </Callout>
 
 ## Getting started
@@ -66,10 +62,9 @@ Before you begin, you'll need the following:
             layout the CLI scaffolds.
           </Callout>
 
-          The starter contains four pieces:
+          The starter contains three pieces:
 
           - `agent/main.py` - the FastAPI app built with the adapter's `create_antigravity_app`, mounting one `AntigravityAgent` with a weather tool
-          - `agent/src/openai_proxy.py` - the shim that lets the Go harness reach an OpenAI-compatible endpoint (used by the smoke-test harness)
           - `src/app/api/copilotkit/[[...slug]]/route.ts` - the CopilotKit runtime route that proxies to the agent with `HttpAgent`
           - `src/app/page.tsx` - a page demonstrating a frontend tool, a rendered backend tool, and a human-in-the-loop picker
         </Step>
@@ -80,7 +75,7 @@ Before you begin, you'll need the following:
           Create a `.env` file in the generated project root:
 
           ```plaintext title=".env"
-          OPENAI_API_KEY=your_openai_api_key
+          GEMINI_API_KEY=your_gemini_api_key
           ```
 
           The runtime route defaults to `AGENT_URL=http://localhost:8000`, which is where the starter's FastAPI agent server listens.
@@ -168,7 +163,7 @@ Before you begin, you'll need the following:
           `uv add ag-ui-antigravity` once the PR merges:
 
           ```bash
-          uv add "git+https://github.com/ag-ui-protocol/ag-ui@50177146f18d133cc4dd178874587c8fdc74e703#subdirectory=integrations/antigravity/python"
+          uv add "git+https://github.com/ag-ui-protocol/ag-ui@61e11031ba4b70ddcb1ba3a2756a906b4349b9ac#subdirectory=integrations/antigravity/python"
           ```
         </Step>
 
@@ -352,7 +347,7 @@ Before you begin, you'll need the following:
     <Accordions className="mb-4">
       <Accordion title="Troubleshooting">
         - If the runtime cannot reach the agent, check that the FastAPI server is running on `http://localhost:8000` or set `AGENT_URL` in the frontend.
-        - If the agent process fails at startup, make sure the key it needs is set — `OPENAI_API_KEY` for the shim path, `GEMINI_API_KEY` for the native path.
+        - If the agent refuses to start or every chat turn fails with "a Gemini API key is required", set `GEMINI_API_KEY`. `GOOGLE_API_KEY` is not read.
         - If a tool call looks like it's hanging, check whether it's a frontend tool: those park as an awaited coroutine across HTTP runs until the browser resolves them, so nothing happens server-side until your UI responds.
         - If a run fails mid-tool-call with a vague "invalid tool call" error, check your `workspaces` path length. A long, high-entropy path (like a generated temp directory) makes the model reproduce it wrongly and causes intermittent failures — use something short and stable instead.
       </Accordion>
