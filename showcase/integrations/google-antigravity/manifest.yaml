@@ -307,7 +307,7 @@ demos:
       - src/app/demos/auth/auth-banner.tsx
       - src/app/demos/auth/use-demo-auth.ts
       - src/app/demos/auth/demo-token.ts
-      - src/app/api/copilotkit-auth/route.ts
+      - src/app/api/copilotkit-auth/[[...slug]]/route.ts
   - id: subagents
     name: Sub-Agents
     description: Multiple agents with visible task delegation
