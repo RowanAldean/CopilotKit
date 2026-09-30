@@ -77,9 +77,7 @@ async def _run(role: str, task: str) -> str:
     candidates = response.json().get("candidates") or [{}]
     parts = (candidates[0].get("content") or {}).get("parts") or []
     # Thinking models return their thought summary as parts flagged `thought`.
-    content = "".join(
-        part.get("text", "") for part in parts if not part.get("thought")
-    )
+    content = "".join(part.get("text", "") for part in parts if not part.get("thought"))
     result = content.strip() or SUB_AGENT_EMPTY_SENTINEL
     _record_delegation(role, task, result)
     return result
