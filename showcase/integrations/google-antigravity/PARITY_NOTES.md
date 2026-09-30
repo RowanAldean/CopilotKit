@@ -84,6 +84,12 @@ built-in tool is disabled (`CapabilitiesConfig(enabled_tools=[BuiltinTools.FINIS
 so that nothing ever parks on an interrupt none of these demos know how to
 answer.
 
+Server tools can also raise AG-UI interrupts of their own with the adapter's
+`interrupt()` (reason, message, metadata and extra fields of their choosing;
+the resume payload comes back unchanged). No showcase cell needs it: the two
+interrupt cells, `gen-ui-interrupt` and `interrupt-headless`, stay quarantined
+upstream for every integration.
+
 ## Sub-agents
 
 `subagents` does not use Antigravity's native sub-agent capability (disabled
