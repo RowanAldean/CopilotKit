@@ -46,7 +46,7 @@ const data: FrameworkOverviewData = {
     },
   ],
   capabilitiesFootnote: {
-    text: "Chat surfaces, headless UI and multi-agent flows work with Google Antigravity too.",
+    text: "Shared state, app context, attachments, reasoning, A2UI and multi-agent flows work with Google Antigravity too.",
     linkLabel: "And more",
     href: "/google-antigravity/build-with-agents",
   },
