@@ -1,6 +1,6 @@
 # CopilotKit Examples
 
-This directory contains 63 consolidated demo repositories showcasing CopilotKit integrations, canvas apps, and showcases.
+This directory contains 64 consolidated demo repositories showcasing CopilotKit integrations, canvas apps, and showcases.
 
 Each example is a self-contained project. To get started:
 
@@ -18,7 +18,7 @@ cd examples/<category>/<name>
 
 > The Intelligence dashboard also links to [Project Manager](./canvas/mastra-pm/), a maintained v2 example covered by the public-example tests.
 
-## Integrations (23)
+## Integrations (24)
 
 Framework integration starters demonstrating CopilotKit with various agent frameworks.
 
