@@ -44,6 +44,8 @@ export async function GET(req: NextRequest) {
     },
     env: {
       NODE_ENV: process.env.NODE_ENV,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY ? "set" : "NOT SET",
+      // Voice transcription only (`/api/copilotkit-voice`).
       OPENAI_API_KEY: process.env.OPENAI_API_KEY ? "set" : "NOT SET",
     },
     nodeVersion: process.version,

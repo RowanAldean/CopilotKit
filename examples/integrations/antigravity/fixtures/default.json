@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "aimock fixtures for the starter smoke suite. The Antigravity Go harness makes the model call itself, through the in-process shim (agent/src/openai_proxy.py), so these match on the ordinary OpenAI chat-completions shape. No match.context: this fixture directory serves one starter, and the starter's shim sends no X-AIMock-Context header. Valid response keys: content, toolCalls, error, embedding."
+    "description": "aimock fixtures for the starter smoke suite. The Antigravity Go harness makes the model call itself, as native Gemini requests to GOOGLE_GEMINI_BASE_URL. No match.context: this fixture directory serves one starter, and the starter sends no X-AIMock-Context header. Valid response keys: content, toolCalls, error, embedding."
   },
   "fixtures": [
     {

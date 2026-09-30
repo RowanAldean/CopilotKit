@@ -59,11 +59,6 @@ subprocess's own HTTP call to aimock. Concretely this means:
 This is a deliberate, documented trade-off rather than an oversight; revisit
 if cells start flapping because of it.
 
-Until 2026-09-30 the package ran on the SDK's OpenAI-compatible path behind an
-in-process shim that added the API key and lowercased Gemini-shaped tool
-schemas. The native path needs neither, so the shim is gone. aimock stages
-turns identically on both paths, so the fixtures did not change.
-
 ## Tool execution
 
 The `tool-rendering`, `tool-rendering-default-catchall`,
@@ -105,12 +100,8 @@ langgraph-python.
 
 ## Reasoning
 
-**Measured on the native Gemini path: surfaced, but not yet probed.** Until
-2026-09-30 the package ran on the SDK's OpenAI-compatible path, where the Go
-harness dropped `reasoning_content` and a reasoning fixture produced only
-answer text (`RUN_STARTED, TEXT_MESSAGE_START, TEXT_MESSAGE_CONTENT x36,
-TEXT_MESSAGE_END, RUN_FINISHED`). On the native path aimock replays a
-fixture's `reasoning` field as Gemini thought parts, the harness turns them
+**Measured: surfaced, but not yet probed.** aimock replays a fixture's
+`reasoning` field as Gemini thought parts, the harness turns them
 into `THINKING` steps, and the adapter emits AG-UI reasoning events. Driving
 the adapter at llamaindex's "sky appears blue" reasoning fixture yields:
 

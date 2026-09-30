@@ -35,8 +35,8 @@ supervisor calls `research_agent`, then `writing_agent`, then
 
 ## Technical Details
 
-- Each role tool posts to the shim's `/v1/chat/completions` endpoint over a
-  shared `httpx.AsyncClient`, stamping `X-AIMock-Context` itself (see
+- Each role tool posts a Gemini `generateContent` request over a shared
+  `httpx.AsyncClient`, stamping `X-AIMock-Context` itself (see
   `src/agents/subagents.py`). The tools are deliberately `async def`: a
   synchronous call here would block the whole agent process's event loop for
   the duration of the model call, stalling every other in-flight run.

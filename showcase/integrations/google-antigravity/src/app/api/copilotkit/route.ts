@@ -58,8 +58,8 @@ const agentNames = [
 // `install_global_httpx_hook()`, so no outbound httpx call replays the
 // recorded headers — the sub-agent tools stamp `X-AIMock-Context`
 // themselves, and the model call is made by the Go harness, which this
-// process cannot reach into at all (the shim stamps a static
-// `X-AIMock-Context` for that hop). The agent-hop record is kept for the
+// process cannot reach into at all (the Gemini endpoint built in
+// `agents/_common.py` carries a static `X-AIMock-Context` for that hop). The agent-hop record is kept for the
 // CVDIAG rows. See PARITY_NOTES.md ("LLM path") and
 // `src/lib/header-forwarding.ts` for the shared helper.
 function buildAgents(
@@ -132,7 +132,7 @@ export const GET = async () => {
     agent_status: agentStatus,
     agent_count: Object.keys(healthProbeAgents).length,
     env: {
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY ? "set" : "NOT SET",
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY ? "set" : "NOT SET",
       NODE_ENV: process.env.NODE_ENV,
     },
   });
