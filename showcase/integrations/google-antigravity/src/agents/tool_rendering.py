@@ -85,8 +85,12 @@ def roll_d20(value: int = 0) -> dict:
     return {"sides": 20, "value": rolled, "result": rolled}
 
 
+# @region[tool-rendering-agent]
 TOOLS = [get_weather, search_flights, get_stock_price, roll_d20]
 
 
 def tool_rendering_agent():
     return build(system_instructions=SYSTEM_PROMPT, tools=TOOLS)
+
+
+# @endregion[tool-rendering-agent]

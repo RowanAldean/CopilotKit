@@ -46,6 +46,7 @@ SYSTEM_PROMPT = (
 )
 
 
+# @region[shared-state-tools]
 def manage_todos(todos: list[dict]) -> str:
     """Manage the current todos. Pass the complete list, not only the changes.
 
@@ -62,6 +63,9 @@ def manage_todos(todos: list[dict]) -> str:
 def get_todos() -> list[dict]:
     """Get the current todos."""
     return get_state().get("todos", [])
+
+
+# @endregion[shared-state-tools]
 
 
 def search_flights(flights: list[dict]) -> dict:
